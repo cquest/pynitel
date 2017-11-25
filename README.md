@@ -11,16 +11,25 @@ See:
 
 ## Examples
 
+### Required hardware
+
+Most Minitel have a serial port on a 5 pins DIN. This serial port is using TTL 5V levels.
+
+Cheap USB / Serial TTL cables are available for a few dollars or euros, like https://www.kubii.fr/composants-raspberry-pi/1761-cable-usb-vers-ttl-4-pin-3272496006263.html
+
+A 220K resistor is needed between the 5V and RX pin on the cable end (green and red wires), without it you can send data to the Minitel but cannot receive data.
+
+
 ### Annuaire
 
 This example simulates the defunct "Annuaire Electronique", the videotex version of the phone directory.
 
-*The goal*: use a Minitel to enter the name / location then query an existing phone directory on the web (118218.fr) and display the results on the Minitel as closest as possible to the original service back in the 80/90s.
+**The goal**: use a Minitel to enter the name / location then query an existing phone directory on the web (118218.fr) and display the results on the Minitel as closest as possible to the original service back in the 80/90s.
 
-*Status*:
+**Status**:
 - name/location input: not implemented yet
 - query existing phone directory: implemented on 118218.fr and 118712.fr
 - basic display: implemented
 - display interaction (paging): not implemented
 
-*To test*: `python3 example_annuaire.py "NAME" "LOCATION"`
+**To test**: `python3 example_annuaire.py "NAME" "LOCATION"`
