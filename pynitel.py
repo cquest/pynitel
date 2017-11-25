@@ -18,6 +18,17 @@ magenta=5
 cyan=6
 blanc=7
 
+# constantes des touches de fonction du Minitel en mode Vidéotex ou Mixte
+envoi=1
+retour=2
+repetition=3
+guide=4
+annulation=5
+sommaire=6
+correction=7
+suite=8
+connexionfin=9
+
 def wait():
   "Attente d'une connexion"
 
@@ -49,10 +60,45 @@ def clear():
   conn.settimeout(0) # timeout de 2 minutes pour les saisies...
   data = conn.recv(10000)
 
-def input(ligne, colonne, longueur, caractere = '.'):
+def input(ligne, colonne, longueur, caractere = '.', data=''):
   "Gestion de zone de saisie"
   texte = ''
-  return text,1
+  # affichage initial
+  pos(ligne, colonne)
+  _print(data)
+  plot(caractere,longueur-len(data))
+  pos(ligne, colonne+len(data))
+
+  while True:
+      c = conn.read(1).decode()
+      if c == '':
+          continue
+      elif c>=' ' and len(data)>=longueur:
+          bip()
+      elif c>=' ' :
+          data = data + c
+      elif c == '\x13': #SEP donc touche Minitel...
+        c = conn.read(1).decode()
+
+        if c == '\x45': # annulation
+            if data == '':
+                bip()
+            else:
+                data = ''
+                pos(ligne, colonne)
+                _print(data)
+                plot(caractere,longueur-len(data))
+                pos(ligne, colonne)
+
+
+        elif c == '\x47': # correction
+            if data != '':
+                send(chr(8)+caractere+chr(8))
+                data = data[:len(data)-1]
+            else:
+                bip()
+        else:
+            return(data,ord(c)-64)
 
 def _print(text):
   "Envoi de texte vers le minitel"
@@ -173,6 +219,9 @@ def sendchr(ascii):
 def sendesc(text):
   sendchr(27)
   send(text)
+
+def bip():
+    sendchr(7)
 
 def accents(text):
   "Conversion des caractères accentués (cf STUM p 103)"
