@@ -27,8 +27,8 @@ This example simulates the defunct "Annuaire Electronique", the videotex version
 **The goal**: use a Minitel to enter the name / location then query an existing phone directory on the web (118218.fr) and display the results on the Minitel as closest as possible to the original service back in the 80/90s.
 
 **Status**:
-- name/location input: not implemented yet
-- query existing phone directory: implemented on 118218.fr and 118712.fr
+- name/location input: implemented
+- query existing phone directory: implemented on 118218.fr, 118712.fr ans 118000.fr
 - basic display: implemented
 - display interaction (paging): not implemented
 
