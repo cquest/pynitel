@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import requests
 import sys
 import time
+import json
 
 def add_if_not_none(the_dict,key,item):
     if item is not None:
@@ -79,6 +80,22 @@ def annuaire118218(qui, ou):
             res.append(dict(nom=p.a.string, adresse=adresse, cp=cp, ville=ville, tel=p.p.string))
     return(res)
 
+
+def annu118000(qui, ou):
+    # recherche sur l'annuaire 118000 (pas de captcha ?)
+    res = []
+    # recherche particuliers
+    req = requests.get('https://www.118000.fr/search',params={"who": qui, "label": ou})
+    h = BeautifulSoup(req.text,'lxml')
+    for p in h.find_all(class_="card"):
+        b=p.find(class_="iconheart")
+        if b['data-info'] is not None:
+            j=json.loads(b['data-info'])
+            res.append(dict(nom=p.h2.a.string, adresse=j['address'], cp=j['cp'], ville=j['city'], tel=j['tel']))
+    return(res)
+
+
+
 def typeit(text):
     for c in text:
         pynitel._print(c)
@@ -95,13 +112,18 @@ with serial.Serial('/dev/ttyUSB0', 4800, parity=serial.PARITY_EVEN, bytesize=7, 
     typeit(sys.argv[1].upper())
     pynitel.pos(10,13)
     typeit(sys.argv[2].upper())
+    res = []
 
-    res = annuaire118218(sys.argv[1], sys.argv[2])
-    annu = "118218.fr"
+
     if len(res)==0:
-        # plan B...
         res = annuaire118712(sys.argv[1], sys.argv[2])
         annu = "118712.fr"
+    if len(res)==0:
+        res = annuaire118218(sys.argv[1], sys.argv[2])
+        annu = "118218.fr"
+    if len(res)==0:
+        res = annu118000(sys.argv[1], sys.argv[2])
+        annu = "118000.fr"
 
 
     pynitel.home()
