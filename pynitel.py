@@ -79,7 +79,7 @@ def vtab(ligne):
   "Positionne le curseur sur un début de ligne"
   pos(ligne,1)
 
-def pos(ligne, colonne):
+def pos(ligne, colonne=1):
   "Positionne le curseur sur une ligne / colonne"
   if ligne == 1 and colonne == 1:
     sendchr(30)
@@ -105,10 +105,20 @@ def backcolor(couleur):
   "Change la couleur de fond, à valider par un espace pour le texte (identique à HCOLOR)"
   sendesc(chr(80+couleur))
 
-def canblock(debut,fin,colonne):
+def canblock(debut,fin,colonne,inverse=False):
     "Efface un rectangle sur l'écran, compris entre deux lignes et après une colonne"
-    for ligne in range(debut, fin):
-        caneol(ligne,colonne)
+    if inverse == False:
+        pos(ligne,colonne)
+        sendchr(24)
+        for ligne in range(debut, fin):
+            sendchr(10)
+            sendchr(24)
+    else:
+        pos(fin,colonne)
+        sendchr(24)
+        for ligne in range(debut, fin):
+            sendchr(11)
+            sendchr(24)
 
 def caneol(ligne, colonne):
     "Efface la fin de ligne derrière la colonne spécifiée"
@@ -169,14 +179,15 @@ def hcolor(couleur):
   "Change la couleur de fond, à valider par un espace pour le texte"
   sendesc(chr(80+couleur))
 
-def input(ligne, colonne, longueur, caractere = '.', data=''):
+def input(ligne, colonne, longueur, caractere = '.', data='',redraw=True):
   "Gestion de zone de saisie"
   texte = ''
   # affichage initial
-  sendchr(20) # Coff
-  pos(ligne, colonne)
-  _print(data)
-  plot(caractere,longueur-len(data))
+  if redraw:
+      sendchr(20) # Coff
+      pos(ligne, colonne)
+      _print(data)
+      plot(caractere,longueur-len(data))
   pos(ligne, colonne+len(data))
   sendchr(17) # Con
 
@@ -216,9 +227,9 @@ def input(ligne, colonne, longueur, caractere = '.', data=''):
 def inverse(inverse=1):
   "Passage en inverse"
   if inverse is None or inverse == 1 or inverse == True:
-      sendesc('\x5C')
-  else:
       sendesc('\x5D')
+  else:
+      sendesc('\x5C')
 
 def locate(ligne,colonne):
     "Positionne le curseur"
@@ -270,6 +281,7 @@ def waitzones(zone):
     while True:
         # affichage initial
         if zone <= 0:
+            cursor(False)
             for z in range(1, len(zones)):
                 pos(zones[z-1]['ligne'],zones[z-1]['colonne'])
                 if zones[z-1]['couleur'] != blanc:
@@ -281,9 +293,7 @@ def waitzones(zone):
         # gestion de la zone de saisie courante
         (zones[zone-1]['texte'],touche) = input(zones[zone-1]['ligne'],
             zones[zone-1]['colonne'], zones[zone-1]['longueur'],
-            caractere = '.', data=zones[zone-1]['texte'])
-
-        print(zones, touche)
+            caractere = '.', data=zones[zone-1]['texte'], redraw=False)
 
         # gestion des SUITE / RETOUR
         if touche == suite and zone<len(zones):
