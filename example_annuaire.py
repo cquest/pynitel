@@ -8,7 +8,7 @@ import json
 
 def init():
     "Initialisation du serveur vidéotex"
-    pynitel.conn = serial.Serial('/dev/ttyUSB0', 4800, parity=serial.PARITY_EVEN, bytesize=7, timeout=2)
+    pynitel.conn = serial.Serial('/dev/ttyUSB0', 1200, parity=serial.PARITY_EVEN, bytesize=7, timeout=2)
 
     if len(sys.argv) > 2:
         (quoi,ou) = (sys.argv[1],sys.argv[2])
@@ -194,7 +194,7 @@ def affiche_resultat(quoi, ou, res, annu=''):
                 pynitel.plot(' ', 40-len(r['nom']+r['tel']))
                 pynitel._print(r['tel']+'\x0d')
                 pynitel.color(pynitel.vert)
-                pynitel._print(r['adresse']+'\x0d\x0a'+r['cp']+' '+r['ville']+'\x0d\x0a')
+                pynitel._print(r['adresse'][:39]+'\x0d\x0a'+r['cp']+' '+r['ville']+'\x0d\x0a')
                 pynitel.color(pynitel.bleu)
                 pynitel.plot('̶', 40)
 
