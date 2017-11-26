@@ -5,6 +5,63 @@ import requests
 import sys
 import json
 
+
+def init():
+    "Initialisation du serveur vidéotex"
+    pynitel.conn = serial.Serial('/dev/ttyUSB0', 4800, parity=serial.PARITY_EVEN, bytesize=7, timeout=2)
+
+    if len(sys.argv) > 2:
+        (quoi,ou) = (sys.argv[1],sys.argv[2])
+    else:
+        (quoi,ou)=('','')
+    return(quoi,ou)
+
+
+def annuaire_saisie(quoi,ou):
+    "Masque de saisie des critères de recherche"
+    # définition des zones
+    pynitel.resetzones()
+    pynitel.zone(5, 13, 27, quoi, pynitel.vert)
+    pynitel.zone(7, 13, 27, '', pynitel.vert)
+    pynitel.zone(10, 13, 27, ou, pynitel.vert)
+    pynitel.zone(13, 13, 27, '', pynitel.vert)
+    pynitel.zone(14, 13, 27, '', pynitel.vert)
+    pynitel.zone(15, 13, 27, '', pynitel.vert)
+    touche = pynitel.repetition
+    zone = 1
+
+    while True:
+        # affichage initial ou répétition
+        if touche == pynitel.repetition:
+            pynitel.home()
+            pynitel.xdraw('ecrans/E.ANNUAIRE.OPTIM.vtx')
+
+        # gestion de la zone de saisie courante
+        (zone, touche) = pynitel.waitzones(zone)
+
+        if touche != pynitel.repetition:
+            break
+
+    quoi = ("%s %s %s" % (pynitel.zones[0]['texte'],pynitel.zones[1]['texte'],pynitel.zones[5]['texte'])).strip()
+    ou = ("%s %s %s" % (pynitel.zones[4]['texte'],pynitel.zones[3]['texte'],pynitel.zones[2]['texte'])).strip()
+    return (touche, quoi, ou)
+
+
+def annuaire_recherche(quoi, ou):
+    "Effectue une recherche sur plusieurs annuaires"
+    res = []
+    if len(res)==0:
+        annu = "118712.fr"
+        res = annuaire118712(quoi, ou)
+    if len(res)==0:
+        annu = "118218.fr"
+        res = annuaire118218(quoi, ou)
+    if len(res)==0:
+        annu = "118000.fr"
+        res = annu118000(quoi, ou)
+    return(res, annu)
+
+
 def add_if_not_none(the_dict,key,item):
     if item is not None:
         the_dict[key] = item.string.strip()
@@ -94,85 +151,113 @@ def annu118000(qui, ou):
     return(res)
 
 
-with serial.Serial('/dev/ttyUSB0', 4800, parity=serial.PARITY_EVEN, bytesize=7, timeout=2) as ser:
-    pynitel.conn=ser
-
-    if len(sys.argv) > 2:
-        (quoi,ou) = (sys.argv[1],sys.argv[2])
-    else:
-        (quoi,ou)=('','')
-
-    # définition des zones
-    pynitel.resetzones()
-    pynitel.zone(5, 13, 27, quoi, pynitel.vert)
-    pynitel.zone(7, 13, 27, '', pynitel.vert)
-    pynitel.zone(10, 13, 27, ou, pynitel.vert)
-    pynitel.zone(13, 13, 27, '', pynitel.vert)
-    pynitel.zone(14, 13, 27, '', pynitel.vert)
-    pynitel.zone(15, 13, 27, '', pynitel.vert)
-    touche = pynitel.repetition
-    zone = 1
+def affiche_resultat(quoi, ou, res, annu=''):
+    "Affiche les résultats de la recherche"
+    page = 1
 
     while True:
-        # affichage initial ou répétition
-        if touche == pynitel.repetition:
+        if page > 0: # affichage
             pynitel.home()
-            pynitel.xdraw('ecrans/E.ANNUAIRE.OPTIM.vtx')
+            pynitel._print(quoi.upper()+' à '+ou)
+            pynitel.pos(2)
+            pynitel.color(pynitel.bleu)
+            pynitel.plot('̶', 40)
+            if annu != '':
+                pynitel.pos(2,10)
+                pynitel.color(pynitel.bleu)
+                pynitel._print(" Source: "+annu+" ")
 
-        # gestion de la zone de saisie courante
-        (zone, touche) = pynitel.waitzones(zone)
+            # plusieurs pages ?
+            if len(res)>5:
+                pynitel.pos(1,37)
+                pynitel._print(" "+str(int(abs(page)))+'/'+str(int((len(res)+4)/5)))
+                pynitel.pos(3)
 
-        if touche != pynitel.repetition:
+            if len(res)>5:
+                if abs(page)>1:
+                    pynitel.pos(2,33)
+                    pynitel.inverse()
+                    pynitel._print('↑RETOUR↑')
+                    pynitel.inverse(False)
+                else:
+                    pynitel.pos(2,33)
+                    pynitel.color(pynitel.bleu)
+                    pynitel.plot('̶', 8)
+
+            pynitel.pos(3)
+            for r in res[(page-1)*5:page*5]:
+                pynitel.color(pynitel.blanc)
+                pynitel._print(r['nom'])
+                pynitel.plot(' ', 40-len(r['nom']+r['tel']))
+                pynitel._print(r['tel']+'\x0d')
+                pynitel.color(pynitel.vert)
+                pynitel._print(r['adresse']+'\x0d\x0a'+r['cp']+' '+r['ville']+'\x0d\x0a')
+                pynitel.color(pynitel.bleu)
+                pynitel.plot('̶', 40)
+
+            if len(res)>5:
+                if len(res)>page*5:
+                    pynitel.pos(22,34)
+                    pynitel.inverse()
+                    pynitel._print('↓SUITE↓')
+                else:
+                    pynitel.pos(22,33)
+                    pynitel.color(pynitel.bleu)
+                    pynitel.plot('̶', 8)
+            if len(res)<5 or len(res)<=page*5:
+                pynitel.pos(22)
+                pynitel.color(pynitel.bleu)
+                pynitel.plot('̶', 40)
+
+            pynitel.pos(24,15)
+            pynitel.color(pynitel.vert)
+            pynitel._print("Autre recherche → ")
+            pynitel.inverse()
+            pynitel.color(pynitel.blanc)
+            pynitel._print("SOMMAIRE")
+        else:
+            page = abs(page)
+
+        (choix,touche) = pynitel.input(0, 1, 0, data='')
+        pynitel.cursor(False)
+        if touche == pynitel.suite:
+            if page*5 < len(res):
+                page = page + 1
+            else:
+                pynitel.bip()
+                page = -page # pas de ré-affichage
+        elif touche == pynitel.retour:
+            if page>1:
+                page = page - 1
+            else:
+                pynitel.bip()
+                page = -page # pas de ré-affichage
+        elif touche == pynitel.sommaire:
             break
+        elif touche != pynitel.repetition:
+            pynitel.bip()
+            page = -page # pas de ré-affichage
 
-    res = []
-
-    quoi = ("%s %s %s" % (pynitel.zones[0]['texte'],pynitel.zones[1]['texte'],pynitel.zones[5]['texte'])).strip()
-    ou = ("%s %s %s" % (pynitel.zones[4]['texte'],pynitel.zones[3]['texte'],pynitel.zones[2]['texte'])).strip()
-
-    pynitel.sendchr(20) # cursor off
-    pynitel.pos(0,1)
-    pynitel.flash()
-    pynitel._print('Recherche... ')
-
-    if len(res)==0:
-        annu = "118712.fr"
-        pynitel._print(annu)
-        res = annuaire118712(quoi, ou)
-    if len(res)==0:
-        annu = "118218.fr"
-        pynitel._print(annu)
-        res = annuaire118218(quoi, ou)
-    if len(res)==0:
-        annu = "118000.fr"
-        pynitel._print(annu)
-        res = annu118000(quoi, ou)
+    return(touche)
 
 
-    pynitel.home()
-    pynitel._print(quoi.upper()+' à '+ou+'\x0d\x0a')
-    pynitel.color(pynitel.bleu)
-    pynitel.plot('̶', 40)
-    for r in res[:5]:
-        pynitel.color(pynitel.blanc)
-        pynitel._print(r['nom'])
-        pynitel.plot(' ', 40-len(r['nom']+r['tel']))
-        pynitel._print(r['tel']+'\x0d')
-        pynitel.color(pynitel.vert)
-        pynitel._print(r['adresse']+'\x0d\x0a'+r['cp']+' '+r['ville']+'\x0d\x0a')
-        pynitel.color(pynitel.bleu)
-        pynitel.plot('̶', 40)
+def annuaire():
+    (quoi, ou) = init()
 
-    pynitel.pos(24,1)
-    pynitel.color(pynitel.magenta)
-    pynitel._print("Source "+annu)
+    while True:
+        (touche, quoi, ou) = annuaire_saisie(quoi, ou)
+        if touche == pynitel.envoi:
+            # on lance la recherche
+            pynitel.pos(0,1)
+            pynitel.flash()
+            pynitel._print('Recherche... ')
+            (resultat, annu) = annuaire_recherche(quoi, ou)
+            print(resultat)
+            if len(resultat) == 0:
+                pynitel.message(0, 1, 3, "Aucune adresse trouvée")
+            else:
+                affiche_resultat(quoi, ou, resultat, annu)
+            quoi = ''
+            ou = ''
 
-    if len(res)>5:
-        pynitel.pos(24,33)
-        pynitel._print('→ ')
-        pynitel.inverse()
-        pynitel._print('SUITE')
-        pynitel.pos(1,38)
-        pynitel._print('1/'+str(int((len(res)+4)/5)))
-
-    ser.flush()
+annuaire()
