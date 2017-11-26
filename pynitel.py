@@ -7,6 +7,11 @@ import time
 ecrans = {'last': None}
 conn = None
 inbuf = b''
+lastkey = 0
+lastscreen = ''
+laststar = False
+zones = []
+zonenumber = 0
 
 # constantes de couleurs
 noir=0
@@ -60,46 +65,6 @@ def clear():
   conn.settimeout(0) # timeout de 2 minutes pour les saisies...
   data = conn.recv(10000)
 
-def input(ligne, colonne, longueur, caractere = '.', data=''):
-  "Gestion de zone de saisie"
-  texte = ''
-  # affichage initial
-  pos(ligne, colonne)
-  _print(data)
-  plot(caractere,longueur-len(data))
-  pos(ligne, colonne+len(data))
-
-  while True:
-      c = conn.read(1).decode()
-      if c == '':
-          continue
-      elif c>=' ' and len(data)>=longueur:
-          bip()
-      elif c>=' ' :
-          data = data + c
-      elif c == '\x13': #SEP donc touche Minitel...
-        c = conn.read(1).decode()
-
-        if c == '\x45': # annulation
-            if data == '':
-                bip()
-            else:
-                data = ''
-                pos(ligne, colonne)
-                _print(data)
-                plot(caractere,longueur-len(data))
-                pos(ligne, colonne)
-
-
-        elif c == '\x47': # correction
-            if data != '':
-                send(chr(8)+caractere+chr(8))
-                data = data[:len(data)-1]
-            else:
-                bip()
-        else:
-            return(data,ord(c)-64)
-
 def _print(text):
   "Envoi de texte vers le minitel"
   send(accents(text))
@@ -135,19 +100,212 @@ def inverse():
 def normal():
   "Passage en vidéo normale"
   sendesc('I')
-  sendesc('\\')
 
-def flash():
+def backcolor(couleur):
+  "Change la couleur de fond, à valider par un espace pour le texte (identique à HCOLOR)"
+  sendesc(chr(80+couleur))
+
+def canblock(debut,fin,colonne):
+    "Efface un rectangle sur l'écran, compris entre deux lignes et après une colonne"
+    for ligne in range(debut, fin):
+        caneol(ligne,colonne)
+
+def caneol(ligne, colonne):
+    "Efface la fin de ligne derrière la colonne spécifiée"
+    pos(ligne,colonne)
+    sendchr(24) # CAN
+
+def cls():
+    "Efface l'écran du Minitel"
+    home()
+
+def color(couleur):
+  "Change la couleur du texte ou graphique"
+  sendesc(chr(64+couleur))
+
+#curpos - donne la position actuelle du curseur du Minitel
+
+def cursor(visible):
+    "Permet de rendre apparent ou invisible le curseur clignotant"
+    if visible == 1 or visible == True :
+        sendchr(17) # Con
+    else:
+        sendchr(20) # Coff
+
+#dial - appel un numéro de téléphone
+
+def draw(num=0):
+  "Envoi un écran préchargé dans un buffer vers le minitel"
+  if num is None:
+    num = ecrans['last']
+  ecrans['last']=num
+  if num is not None:
+    conn.write(ecrans[num])
+
+def drawscreen(fichier):
+  "Envoi du contenu d'un fichier"
+  with open(fichier,'rb') as f:
+    conn.write(f.read())
+
+def flash(clignote=True):
   "Passage en clignotant"
-  sendesc('H')
+  if clignote is None or clignote == True or clignote == 1:
+      sendesc('\x48')
+  else:
+      sendesc('\x49')
+
+def forecolor(couleur):
+    "Change la couleur des caractères"
+    color(couleur)
+
+def get():
+    "Rend le contenu du buffer de saisie actuel"
+    return(conn.read(conn.in_waiting).decode())
+
+# getid - lecture ROM/RAM Minitel
+
 
 def hcolor(couleur):
   "Change la couleur de fond, à valider par un espace pour le texte"
   sendesc(chr(80+couleur))
 
-def color(couleur):
-  "Change la couleur du texte ou graphique"
-  sendesc(chr(64+couleur))
+def input(ligne, colonne, longueur, caractere = '.', data=''):
+  "Gestion de zone de saisie"
+  texte = ''
+  # affichage initial
+  sendchr(20) # Coff
+  pos(ligne, colonne)
+  _print(data)
+  plot(caractere,longueur-len(data))
+  pos(ligne, colonne+len(data))
+  sendchr(17) # Con
+
+  while True:
+      c = conn.read(1).decode()
+      if c == '':
+          continue
+      elif c>=' ' and len(data)>=longueur:
+          bip()
+      elif c>=' ' :
+          data = data + c
+      elif c == '\x13': #SEP donc touche Minitel...
+        c = conn.read(1).decode()
+
+        if c == '\x45': # annulation
+            if data == '':
+                bip()
+            else:
+                data = ''
+                sendchr(20) # Coff
+                pos(ligne, colonne)
+                _print(data)
+                plot(caractere,longueur-len(data))
+                pos(ligne, colonne)
+                sendchr(17) # Con
+        elif c == '\x47': # correction
+            if data != '':
+                send(chr(8)+caractere+chr(8))
+                data = data[:len(data)-1]
+            else:
+                bip()
+        else:
+            lastkey = ord(c)-64
+            laststar = (data != '' and data[:-1] == '*')
+            return(data,ord(c)-64)
+
+def inverse(inverse=1):
+  "Passage en inverse"
+  if inverse is None or inverse == 1 or inverse == True:
+      sendesc('\x5C')
+  else:
+      sendesc('\x5D')
+
+def locate(ligne,colonne):
+    "Positionne le curseur"
+    pos(ligne, colonne)
+
+# lower - change le clavier en mode minuscule / majuscule (mode "Enseignement")
+
+def message(ligne,colonne,delai,message):
+    "Affiche un message à une position donnée pendant un temps donné, puis l'efface"
+    pos(ligne, colonne)
+    _print(message)
+    conn.flush()
+    time.sleep(delai)
+    pos(ligne, colonne)
+    plot(' ', len(message))
+
+def printscreen(fichier):
+    drawscreen(fichier)
+
+def resetzones():
+    zones = []
+
+# scroll - Active ou désactive le mode "rouleau"
+
+def starflag():
+    "Indique si la dernière saisie s'est terminée par une étoile + touche de fonction"
+    return(laststar)
+
+# status - Etat du modem
+
+# swmodem - Retournement du modem
+
+# sysparm - Paramètres du modem
+
+def underline(souligne=True):
+    "Passe en mode souligné ou normal"
+    if souligne is None or souligne == True or souligne == 1:
+        sendesc(chr(90))
+    else:
+        sendesc(chr(89))
+
+def waitzones(zone):
+    "Gestion de zones de saisie"
+    if len(zones) == 0:
+        return (0,0)
+
+    zone = -zone
+
+    while True:
+        # affichage initial
+        if zone <= 0:
+            for z in range(1, len(zones)):
+                pos(zones[z-1]['ligne'],zones[z-1]['colonne'])
+                if zones[z-1]['couleur'] != blanc:
+                    forecolor(zones[z-1]['couleur'])
+                _print(zones[z-1]['texte'])
+            if zone < 0:
+                zone = -zone
+
+        # gestion de la zone de saisie courante
+        (zones[zone-1]['texte'],touche) = input(zones[zone-1]['ligne'],
+            zones[zone-1]['colonne'], zones[zone-1]['longueur'],
+            caractere = '.', data=zones[zone-1]['texte'])
+
+        print(zones, touche)
+
+        # gestion des SUITE / RETOUR
+        if touche == suite and zone<len(zones):
+            zone = zone+1
+        if touche == retour and zone>1:
+            zone = zone-1
+        if touche == repetition:
+            zone = -zone
+
+        if touche == envoi:
+            zonenumber = zone
+            return(zone,touche)
+
+# waitconnect - attente de CONNECTION
+
+def zone(ligne, colonne, longueur, texte, couleur):
+    "Déclaration d'une zone de saisie"
+    zones.append({"ligne": ligne, "colonne": colonne,"longueur":longueur,"texte":texte,"couleur":couleur})
+
+def key():
+    "Dernière touche de fonction utilisée sur le Minitel lors d'une saisie"
+    return lastkey
 
 def scale(taille):
   "Change la taille du texte"
@@ -191,14 +349,6 @@ def load(num, fichier):
   with open(fichier,'rb') as f:
     data = f.read()
     ecrans[num] = data
-
-def draw(num):
-  "Envoi un écran préchargé dans un buffer vers le minitel"
-  if num is None:
-    num = ecrans['last']
-  ecrans['last']=num
-  if num is not None:
-    conn.write(ecrans[num])
 
 def read():
   "Lecture de la date et heure"
