@@ -81,6 +81,8 @@ def annuaire118712(qui, ou):
         adresse = p.find(itemprop="streetAddress")
         if adresse is not None:
             result['adresse'] = adresse.string.strip()
+        else:
+            result['adresse'] = ''
         lat = p.find(itemprop="latitude")
         if lat is not None:
             result['lat'] = lat.string.strip()
@@ -177,6 +179,7 @@ def affiche_resultat(quoi, ou, res, annu=''):
                 if abs(page)>1:
                     pynitel.pos(2,33)
                     pynitel.inverse()
+                    pynitel.color(pynitel.cyan)
                     pynitel._print('↑RETOUR↑')
                     pynitel.inverse(False)
                 else:
@@ -199,6 +202,7 @@ def affiche_resultat(quoi, ou, res, annu=''):
                 if len(res)>page*5:
                     pynitel.pos(22,34)
                     pynitel.inverse()
+                    pynitel.color(pynitel.cyan)
                     pynitel._print('↓SUITE↓')
                 else:
                     pynitel.pos(22,33)
@@ -213,7 +217,7 @@ def affiche_resultat(quoi, ou, res, annu=''):
             pynitel.color(pynitel.vert)
             pynitel._print("Autre recherche → ")
             pynitel.inverse()
-            pynitel.color(pynitel.blanc)
+            pynitel.color(pynitel.cyan)
             pynitel._print("SOMMAIRE")
         else:
             page = abs(page)
@@ -248,6 +252,7 @@ def annuaire():
         (touche, quoi, ou) = annuaire_saisie(quoi, ou)
         if touche == pynitel.envoi:
             # on lance la recherche
+            pynitel.cursor(False)
             pynitel.pos(0,1)
             pynitel.flash()
             pynitel._print('Recherche... ')
