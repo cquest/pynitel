@@ -102,55 +102,51 @@ with serial.Serial('/dev/ttyUSB0', 4800, parity=serial.PARITY_EVEN, bytesize=7, 
     else:
         (quoi,ou)=('','')
 
-    zones = [quoi, '',ou,'','','']
-    zones_ligne=[5,7,10,13,14,15]
-    zone = 0
+    # définition des zones
+    pynitel.resetzones()
+    pynitel.zone(5, 13, 27, quoi, pynitel.vert)
+    pynitel.zone(7, 13, 27, '', pynitel.vert)
+    pynitel.zone(10, 13, 27, ou, pynitel.vert)
+    pynitel.zone(13, 13, 27, '', pynitel.vert)
+    pynitel.zone(14, 13, 27, '', pynitel.vert)
+    pynitel.zone(15, 13, 27, '', pynitel.vert)
+    touche = pynitel.repetition
+    zone = 1
+
     while True:
-        # affichage initial
-        if zone <= 0:
+        # affichage initial ou répétition
+        if touche == pynitel.repetition:
             pynitel.home()
             pynitel.xdraw('ecrans/E.ANNUAIRE.OPTIM.vtx')
-            if zone < 0:
-                zone = -zone
-            else:
-                zone = 1
-                for z in range(1, len(zones)):
-                    pynitel.pos(zones_ligne[z-1],13)
-                    pynitel._print(zones[z-1])
 
         # gestion de la zone de saisie courante
-        (zones[zone-1],touche) = pynitel.input(zones_ligne[zone-1], 13, 27, caractere = '.', data=zones[zone-1])
+        (zone, touche) = pynitel.waitzones(zone)
 
-        # gestion des SUITE / RETOUR
-        if touche == pynitel.suite and zone<len(zones):
-            zone = zone+1
-        if touche == pynitel.retour and zone>1:
-            zone = zone-1
-        if touche == pynitel.repetition:
-            zone = -zone
-
-        if touche == pynitel.envoi:
+        if touche != pynitel.repetition:
             break
 
     res = []
 
-    quoi = ("%s %s %s" % (zones[0],zones[1],zones[5])).strip()
-    ou = ("%s %s %s" % (zones[4],zones[3],zones[2])).strip()
+    quoi = ("%s %s %s" % (pynitel.zones[0]['texte'],pynitel.zones[1]['texte'],pynitel.zones[5]['texte'])).strip()
+    ou = ("%s %s %s" % (pynitel.zones[4]['texte'],pynitel.zones[3]['texte'],pynitel.zones[2]['texte'])).strip()
 
     pynitel.sendchr(20) # cursor off
     pynitel.pos(0,1)
     pynitel.flash()
-    pynitel._print('Recherche...')
+    pynitel._print('Recherche... ')
 
     if len(res)==0:
-        res = annuaire118712(quoi, ou)
         annu = "118712.fr"
+        pynitel._print(annu)
+        res = annuaire118712(quoi, ou)
     if len(res)==0:
-        res = annuaire118218(quoi, ou)
         annu = "118218.fr"
+        pynitel._print(annu)
+        res = annuaire118218(quoi, ou)
     if len(res)==0:
-        res = annu118000(quoi, ou)
         annu = "118000.fr"
+        pynitel._print(annu)
+        res = annu118000(quoi, ou)
 
 
     pynitel.home()
