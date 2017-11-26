@@ -298,12 +298,9 @@ def waitzones(zone):
         # gestion des SUITE / RETOUR
         if touche == suite and zone<len(zones):
             zone = zone+1
-        if touche == retour and zone>1:
+        elif touche == retour and zone>1:
             zone = zone-1
-        if touche == repetition:
-            zone = -zone
-
-        if touche == envoi:
+        else:
             zonenumber = zone
             return(zone,touche)
 
