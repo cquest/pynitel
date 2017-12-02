@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import serial
 import pynitel
 from bs4 import BeautifulSoup

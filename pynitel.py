@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # ré-écritude en python3 de Cristel !
 # (C) 1984-2017 Christian Quest / A-GPL
 
