@@ -253,7 +253,8 @@ def printscreen(fichier):
     drawscreen(fichier)
 
 def resetzones():
-    zones = []
+    while len(zones)>0:
+        zones.pop()
 
 # scroll - Active ou désactive le mode "rouleau"
 
