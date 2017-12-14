@@ -25,12 +25,12 @@ def annuaire_saisie(quoi,ou):
     "Masque de saisie des critères de recherche"
     # définition des zones
     pynitel.resetzones()
-    pynitel.zone(5, 13, 27, quoi, pynitel.vert)
-    pynitel.zone(7, 13, 27, '', pynitel.vert)
-    pynitel.zone(10, 13, 27, ou, pynitel.vert)
-    pynitel.zone(13, 13, 27, '', pynitel.vert)
-    pynitel.zone(14, 13, 27, '', pynitel.vert)
-    pynitel.zone(15, 13, 27, '', pynitel.vert)
+    pynitel.zone(5, 13, 27, quoi, pynitel.blanc)
+    pynitel.zone(7, 13, 27, '', pynitel.blanc)
+    pynitel.zone(10, 13, 27, ou, pynitel.blanc)
+    pynitel.zone(13, 13, 27, '', pynitel.blanc)
+    pynitel.zone(14, 13, 27, '', pynitel.blanc)
+    pynitel.zone(15, 13, 27, '', pynitel.blanc)
     touche = pynitel.repetition
     zone = 1
 
@@ -271,7 +271,8 @@ def affiche_resultat(quoi, ou, res, annu=''):
         else:
             page = abs(page)
 
-        (choix,touche) = pynitel.input(0, 1, 0, data='')
+        # attente saisie
+        (choix,touche) = pynitel.input(0, 1, 0, '')
         pynitel.cursor(False)
         if touche == pynitel.suite:
             if page*5 < len(res):
@@ -287,6 +288,8 @@ def affiche_resultat(quoi, ou, res, annu=''):
                 page = -page # pas de ré-affichage
         elif touche == pynitel.sommaire:
             break
+        elif touche == pynitel.correction: # retour saisie pour correction
+            return(touche)
         elif touche != pynitel.repetition:
             pynitel.bip()
             page = -page # pas de ré-affichage
@@ -311,8 +314,8 @@ def annuaire():
             if len(resultat) == 0:
                 pynitel.message(0, 1, 3, "Aucune adresse trouvée")
             else:
-                affiche_resultat(annuaire_quoi, annuaire_ou, resultat, annu)
-            (annuaire_quoi, annuaire_ou) = ('','')
+                if affiche_resultat(annuaire_quoi, annuaire_ou, resultat, annu) != pynitel.correction:
+                    (annuaire_quoi, annuaire_ou) = ('','')
 
 if __name__ == '__main__':
     annuaire()
