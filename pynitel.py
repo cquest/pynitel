@@ -182,7 +182,7 @@ def hcolor(couleur):
   "Change la couleur de fond, à valider par un espace pour le texte"
   sendesc(chr(80+couleur))
 
-def input(ligne, colonne, longueur, caractere = '.', data='',redraw=True):
+def input(ligne, colonne, longueur, data='', caractere = '.', redraw=True):
   "Gestion de zone de saisie"
   texte = ''
   # affichage initial
@@ -198,34 +198,28 @@ def input(ligne, colonne, longueur, caractere = '.', data='',redraw=True):
       c = conn.read(1).decode()
       if c == '':
           continue
-      elif c>=' ' and len(data)>=longueur:
-          bip()
-      elif c>=' ' :
-          data = data + c
       elif c == '\x13': #SEP donc touche Minitel...
         c = conn.read(1).decode()
 
-        if c == '\x45': # annulation
-            if data == '':
-                bip()
-            else:
-                data = ''
-                sendchr(20) # Coff
-                pos(ligne, colonne)
-                _print(data)
-                plot(caractere,longueur-len(data))
-                pos(ligne, colonne)
-                sendchr(17) # Con
-        elif c == '\x47': # correction
-            if data != '':
-                send(chr(8)+caractere+chr(8))
-                data = data[:len(data)-1]
-            else:
-                bip()
+        if c == '\x45' and data != '': # annulation
+            data = ''
+            sendchr(20) # Coff
+            pos(ligne, colonne)
+            _print(data)
+            plot(caractere,longueur-len(data))
+            pos(ligne, colonne)
+            sendchr(17) # Con
+        elif c == '\x47' and data != '': # correction
+            send(chr(8)+caractere+chr(8))
+            data = data[:len(data)-1]
         else:
             lastkey = ord(c)-64
             laststar = (data != '' and data[:-1] == '*')
             return(data,ord(c)-64)
+      elif c>=' ' and len(data)>=longueur:
+          bip()
+      elif c>=' ' :
+          data = data + c
 
 def inverse(inverse=1):
   "Passage en inverse"
@@ -297,13 +291,19 @@ def waitzones(zone):
         # gestion de la zone de saisie courante
         (zones[zone-1]['texte'],touche) = input(zones[zone-1]['ligne'],
             zones[zone-1]['colonne'], zones[zone-1]['longueur'],
-            caractere = '.', data=zones[zone-1]['texte'], redraw=False)
+            data=zones[zone-1]['texte'], caractere = '.', redraw=False)
 
         # gestion des SUITE / RETOUR
-        if touche == suite and zone<len(zones):
-            zone = zone+1
-        elif touche == retour and zone>1:
-            zone = zone-1
+        if touche == suite:
+            if zone<len(zones):
+                zone = zone+1
+            else:
+                zone = 1
+        elif touche == retour:
+            if zone>1:
+                zone = zone-1
+            else:
+                zone = len(zones)
         else:
             zonenumber = zone
             return(zone,touche)
