@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import requests
 import sys
 import json
+import textwrap
 
 
 def init():
@@ -155,6 +156,15 @@ def annu118000(qui, ou):
             res.append(dict(nom=p.h2.a.string, adresse=j['address'], cp=j['cp'], ville=j['city'], tel=j['tel']))
     return(res)
 
+def strformat(left='',right='',fill=' ',width=40):
+    " formattage de texte "
+    total = width-len(left+right)
+    if total > 0 :
+        out = left + fill * total + right
+    else:
+        out = left+center+right
+    print("'"+out+"'",width,total,len(out))
+    return(out)
 
 def affiche_resultat(quoi, ou, res, annu=''):
     "Affiche les résultats de la recherche"
@@ -162,6 +172,7 @@ def affiche_resultat(quoi, ou, res, annu=''):
 
     while True:
         if page > 0: # affichage
+            # entête sur 2 lignes + séparation
             pynitel.home()
             pynitel._print(quoi.upper()+' à '+ou)
             pynitel.pos(2)
@@ -178,47 +189,82 @@ def affiche_resultat(quoi, ou, res, annu=''):
                 pynitel._print(" "+str(int(abs(page)))+'/'+str(int((len(res)+4)/5)))
                 pynitel.pos(3)
 
-            if len(res)>5:
-                if abs(page)>1:
-                    pynitel.pos(2,33)
-                    pynitel.inverse()
-                    pynitel.color(pynitel.cyan)
-                    pynitel._print('↑RETOUR↑')
-                    pynitel.inverse(False)
-                else:
-                    pynitel.pos(2,33)
-                    pynitel.color(pynitel.bleu)
-                    pynitel.plot('̶', 8)
+            # if len(res)>5:
+            #     if abs(page)>1:
+            #         pynitel.pos(2,33)
+            #         pynitel.inverse()
+            #         pynitel.color(pynitel.cyan)
+            #         pynitel._print('↑RETOUR↑')
+            #         pynitel.inverse(False)
+            #     else:
+            #         pynitel.pos(2,33)
+            #         pynitel.color(pynitel.bleu)
+            #         pynitel.plot('̶', 8)
 
+            # première ligne de résultat
             pynitel.pos(3)
-            for r in res[(page-1)*5:page*5]:
-                pynitel.color(pynitel.blanc)
-                pynitel._print(r['nom'])
-                pynitel.plot(' ', 40-len(r['nom']+r['tel']))
-                pynitel._print(r['tel']+'\x0d')
-                pynitel.color(pynitel.vert)
-                pynitel._print(r['adresse'][:39]+'\x0d\x0a'+r['cp']+' '+r['ville']+'\x0d\x0a')
-                pynitel.color(pynitel.bleu)
-                pynitel.plot('̶', 40)
-
-            if len(res)>5:
-                if len(res)>page*5:
-                    pynitel.pos(22,34)
-                    pynitel.inverse()
-                    pynitel.color(pynitel.cyan)
-                    pynitel._print('↓SUITE↓')
-                else:
-                    pynitel.pos(22,33)
+            for a in range((page-1)*5,page*5):
+                if a < len(res):
+                    r = res[a]
+                    if 'adresse' not in r or r['adresse']=='':
+                        r['adresse']='(adresse masquée)'
+                    if 'tel' not in r or r['tel']=='':
+                        r['tel']=' (num. masqué)'
+                    pynitel.color(pynitel.blanc)
+                    pynitel._print(strformat(right=str(int(a+1)),width=3))
+                    pynitel._print(' '+strformat(left=r['nom'][:20], right=r['tel'], width=36))
+                    pynitel.color(pynitel.vert)
+                    pynitel._print('    '+r['adresse'][:35]+'\x0d\x0a    '+r['cp']+' '+r['ville']+'\x0d\x0a')
                     pynitel.color(pynitel.bleu)
-                    pynitel.plot('̶', 8)
-            if len(res)<5 or len(res)<=page*5:
-                pynitel.pos(22)
-                pynitel.color(pynitel.bleu)
-                pynitel.plot('̶', 40)
+                    if a < page*5:
+                        pynitel.plot(' ', 4)
+                        pynitel.plot('̶', 36)
+
+            # ligne finale
+            pynitel.pos(22)
+            pynitel.color(pynitel.bleu)
+            pynitel.plot('̶', 40)
+
+            # if len(res)>5:
+            #     if len(res)>page*5:
+            #         pynitel.pos(22,34)
+            #         pynitel.inverse()
+            #         pynitel.color(pynitel.cyan)
+            #         pynitel._print('↓SUITE↓')
+            #     else:
+            #         pynitel.pos(22,33)
+            #         pynitel.color(pynitel.bleu)
+            #         pynitel.plot('̶', 8)
+            # if len(res)<5 or len(res)<=page*5:
+            #     pynitel.pos(22)
+            #     pynitel.color(pynitel.bleu)
+            #     pynitel.plot('̶', 40)
+
+            if page>1:
+                if len(res)>page*5: # place pour le SUITE
+                    pynitel.pos(22,15)
+                else:
+                    pynitel.pos(23,15)
+                pynitel.color(pynitel.vert)
+                pynitel._print('page précédente →')
+                pynitel.underline()
+                pynitel._print(' ')
+                pynitel.inverse()
+                pynitel.color(pynitel.cyan)
+                pynitel._print('_RETOUR ')
+            if len(res)>page*5:
+                pynitel.pos(23,17)
+                pynitel.color(pynitel.vert)
+                pynitel._print('page suivante →')
+                pynitel.underline()
+                pynitel._print(' ')
+                pynitel.inverse()
+                pynitel.color(pynitel.cyan)
+                pynitel._print('_SUITE  ')
 
             pynitel.pos(24,15)
             pynitel.color(pynitel.vert)
-            pynitel._print("Autre recherche → ")
+            pynitel._print("autre recherche → ")
             pynitel.inverse()
             pynitel.color(pynitel.cyan)
             pynitel._print("SOMMAIRE")
@@ -249,23 +295,24 @@ def affiche_resultat(quoi, ou, res, annu=''):
 
 
 def annuaire():
-    (quoi, ou) = init()
+    (annuaire_quoi, annuaire_ou) = init()
 
     while True:
-        (touche, quoi, ou) = annuaire_saisie(quoi, ou)
+        print(annuaire_quoi, annuaire_ou)
+        (touche, annuaire_quoi, annuaire_ou) = annuaire_saisie(annuaire_quoi, annuaire_ou)
         if touche == pynitel.envoi:
             # on lance la recherche
             pynitel.cursor(False)
             pynitel.pos(0,1)
             pynitel.flash()
             pynitel._print('Recherche... ')
-            (resultat, annu) = annuaire_recherche(quoi, ou)
+            (resultat, annu) = annuaire_recherche(annuaire_quoi, annuaire_ou)
             print(resultat)
             if len(resultat) == 0:
                 pynitel.message(0, 1, 3, "Aucune adresse trouvée")
             else:
-                affiche_resultat(quoi, ou, resultat, annu)
-            quoi = ''
-            ou = ''
+                affiche_resultat(annuaire_quoi, annuaire_ou, resultat, annu)
+            (annuaire_quoi, annuaire_ou) = ('','')
 
-annuaire()
+if __name__ == '__main__':
+    annuaire()
