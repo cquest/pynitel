@@ -179,9 +179,9 @@ def affiche_resultat(quoi, ou, res, annu=''):
             pynitel.color(pynitel.bleu)
             pynitel.plot('̶', 40)
             if annu != '':
-                pynitel.pos(2,10)
+                pynitel.pos(23,1)
                 pynitel.color(pynitel.bleu)
-                pynitel._print(" Source: "+annu+" ")
+                pynitel._print("(C)\x0d\x0a"+annu)
 
             # plusieurs pages ?
             if len(res)>5:
