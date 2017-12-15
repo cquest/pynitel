@@ -76,7 +76,7 @@ def home():
   "Efface écran et ligne 0"
   _del(0,1)
   sendchr(12) # FF
-  sendchr(20) # Coff
+  cursor(False) # Coff
 
 def vtab(ligne):
   "Positionne le curseur sur un début de ligne"
@@ -234,8 +234,10 @@ def locate(ligne,colonne):
 
 # lower - change le clavier en mode minuscule / majuscule (mode "Enseignement")
 
-def message(ligne,colonne,delai,message):
+def message(ligne,colonne,delai,message,bip=False):
     "Affiche un message à une position donnée pendant un temps donné, puis l'efface"
+    if bip:
+        bip()
     pos(ligne, colonne)
     _print(message)
     conn.flush()
@@ -332,9 +334,13 @@ def trace():
 
 def plot(car,nombre):
   "Affichage répété d'un caractère"
-  _print(car)
-  sendchr(18)
-  sendchr(63+nombre)
+  if nombre > 1:
+      _print(car)
+  if nombre == 2:
+      _print(car)
+  elif nombre > 2:
+      sendchr(18)
+      sendchr(63+nombre)
 
 def text():
   "Mode texte"
