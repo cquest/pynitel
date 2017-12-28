@@ -225,7 +225,7 @@ class Pynitel:
                 self.laststar = (data != '' and data[:-1] == '*')
                 return(data,ord(c)-64)
           elif c>=' ' and len(data)>=longueur:
-              bip()
+              self.bip()
           elif c>=' ' :
               data = data + c
 
