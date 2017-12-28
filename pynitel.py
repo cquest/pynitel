@@ -298,11 +298,11 @@ class Pynitel:
             # affichage initial
             if zone <= 0:
                 self.cursor(False)
-                for z in range(1, len(self.zones)):
-                    self.pos(self.zones[z-1]['ligne'],self.zones[z-1]['colonne'])
-                    if self.zones[z-1]['couleur'] != self.blanc:
-                        self.forecolor(self.zones[z-1]['couleur'])
-                    self._print(self.zones[z-1]['texte'])
+                for z in self.zones:
+                    self.pos(z['ligne'],z['colonne'])
+                    if z['couleur'] != self.blanc:
+                        self.forecolor(z['couleur'])
+                    self._print(z['texte'])
                 if zone < 0:
                     zone = -zone
 
