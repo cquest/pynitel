@@ -207,23 +207,31 @@ class Pynitel:
           if c == '':
               continue
           elif c == '\x13': #SEP donc touche Minitel...
-            c = self.conn.read(1).decode()
+              c = self.conn.read(1).decode()
 
-            if c == '\x45' and data != '': # annulation
-                data = ''
-                self.sendchr(20) # Coff
-                self.pos(ligne, colonne)
-                self._print(data)
-                self.plot(caractere,longueur-len(data))
-                self.pos(ligne, colonne)
-                self.sendchr(17) # Con
-            elif c == '\x47' and data != '': # correction
-                self.send(chr(8)+caractere+chr(8))
-                data = data[:len(data)-1]
-            else:
-                self.lastkey = ord(c)-64
-                self.laststar = (data != '' and data[:-1] == '*')
-                return(data,ord(c)-64)
+              if c == '\x45' and data != '': # annulation
+                  data = ''
+                  self.sendchr(20) # Coff
+                  self.pos(ligne, colonne)
+                  self._print(data)
+                  self.plot(caractere,longueur-len(data))
+                  self.pos(ligne, colonne)
+                  self.sendchr(17) # Con
+              elif c == '\x47' and data != '': # correction
+                  self.send(chr(8)+caractere+chr(8))
+                  data = data[:len(data)-1]
+              else:
+                  self.lastkey = ord(c)-64
+                  self.laststar = (data != '' and data[:-1] == '*')
+                  return(data,ord(c)-64)
+          elif c == '\x1b': # filtrage des acquittements protocole...
+              c = c + self.conn.read(1).decode()
+              if c == self.PRO1:
+                  self.conn.read(1)
+              elif c == self.PRO2:
+                  self.conn.read(2)
+              elif c == self.PRO3:
+                  self.conn.read(3)
           elif c>=' ' and len(data)>=longueur:
               self.bip()
           elif c>=' ' :
