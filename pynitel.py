@@ -39,6 +39,11 @@ class Pynitel:
         self.suite=8
         self.connexionfin=9
 
+        # constantes des séquences protocole
+        self.PRO1 = '\x1b\x39'
+        self.PRO2 = '\x1b\x3a'
+        self.PRO3 = '\x1b\x3b'
+
 
     def wait(self):
       "Attente d'une connexion"
