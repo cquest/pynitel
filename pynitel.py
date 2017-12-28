@@ -311,6 +311,7 @@ class Pynitel:
                     zone = len(self.zones)
             else:
                 self.zonenumber = zone
+                self.cursor(False)
                 return(zone,touche)
 
     # waitconnect - attente de CONNECTION
