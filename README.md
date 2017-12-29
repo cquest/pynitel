@@ -33,3 +33,15 @@ This example simulates the defunct "Annuaire Electronique", the videotex version
 - display interaction (paging): implemented
 
 **To test**: `python3 example_annuaire.py`
+
+
+### 3615 ULLA
+
+This example simulates the famous "3615 ULLA" a chat and messaging pink Minitel service.
+
+**The goal**: recreate the videotex interface of 3615 ULLA, but acting as a Mastodon client. The script mainly deals with the videotex recreation, and delegates all the messaging part to Mastodon though its API.
+
+**Status**: partly implemented
+
+**To test**: `python3 ulla.py [mastodon_account password]`
+**Example**: `python3 ulla.py cquest@amicale.net mypassword`
