@@ -119,7 +119,7 @@ class Pynitel:
     def canblock(self,debut,fin,colonne,inverse=False):
         "Efface un rectangle sur l'écran, compris entre deux lignes et après une colonne"
         if inverse == False:
-            self.pos(ligne,colonne)
+            self.pos(debut,colonne)
             self.sendchr(24)
             for ligne in range(debut, fin):
                 self.sendchr(10)
@@ -356,8 +356,12 @@ class Pynitel:
       if nombre == 2:
           self._print(car)
       elif nombre > 2:
+          while nombre>63:
+              self.sendchr(18)
+              self.sendchr(64+63)
+              nombre = nombre-63
           self.sendchr(18)
-          self.sendchr(63+nombre)
+          self.sendchr(64+nombre-1)
 
     def text(self):
       "Mode texte"
