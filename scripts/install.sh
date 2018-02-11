@@ -1,3 +1,8 @@
+#
+# Script d'installation pour un fonctionnement automatique
+# de l'annuaire électronique sur une Raspberry Pi
+#
+
 # update raspbian
 sudo apt update && sudo apt dist-upgrade -y
 
