@@ -1,3 +1,6 @@
+# ignore mastodon API hask secret files
+*.secret
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
