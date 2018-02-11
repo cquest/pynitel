@@ -18,5 +18,7 @@ pip3 install -r requirements.txt
 
 # installation service systemd
 sudo cp scripts/ae.service /etc/systemd/system/
+sudo systemctl enable ae.service
+chmod u+x scripts/autostart.sh
 
 sudo reboot
