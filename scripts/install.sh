@@ -7,7 +7,7 @@
 sudo apt update && sudo apt dist-upgrade -y
 
 # installation git python3 et pip3
-sudo apt install git python3 python3-pip -y
+sudo apt install git python3 python3-pip python3-lxml -y
 
 # instalation de pynitel
 cd ~ && git clone https://github.com/cquest/pynitel.git
