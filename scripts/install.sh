@@ -1,8 +1,8 @@
 # update raspbian
-sudo apt update && sudo apt dist-upgrade
+sudo apt update && sudo apt dist-upgrade -y
 
 # installation git python3 et pip3
-sudo apt install git python3 python3-pip
+sudo apt install git python3 python3-pip -y
 
 # instalation de pynitel
 cd ~ && git clone https://github.com/cquest/pynitel.git
@@ -12,6 +12,6 @@ cd pynitel
 pip3 install -r requirements.txt
 
 # installation service systemd
-sudo cp ae.service /etc/systemd/system
+sudo cp scripts/ae.service /etc/systemd/system/
 
 sudo reboot
