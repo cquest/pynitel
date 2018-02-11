@@ -1,0 +1,14 @@
+[Unit]
+Description=Annuaire Electronique
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/home/pi/pynitel/autostart.sh
+
+Restart=on-abort
+
+
+[Install]
+WantedBy=multi-user.target
