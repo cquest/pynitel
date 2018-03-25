@@ -4,16 +4,18 @@
 import serial
 import pynitel
 import sys
-import json
 from mastodon import Mastodon
 import os
-import time
 import re
+
 
 def init():
     "Initialisation du serveur vidéotex"
-    minitel = pynitel.Pynitel(serial.Serial('/dev/ttyUSB0', 1200, parity=serial.PARITY_EVEN, bytesize=7, timeout=2))
+    minitel = pynitel.Pynitel(serial.Serial('/dev/ttyUSB0', 1200,
+                                            parity=serial.PARITY_EVEN,
+                                            bytesize=7, timeout=2))
     return(minitel)
+
 
 def connexion(minitel, login='', passe=''):
     "Ecran d'accueil et d'identification"
@@ -39,9 +41,9 @@ def connexion(minitel, login='', passe=''):
         login = login[1:]
 
     if login != '' and touche == minitel.envoi and passe == '':
-        minitel.pos(0,1)
+        minitel.pos(0, 1)
         minitel._print("Passe:")
-        (passe,touche) = minitel.input(0, 7, 30, data='')
+        (passe, touche) = minitel.input(0, 7, 30, data='')
 
     return (login, passe)
 
@@ -55,7 +57,7 @@ def mastodon_login(login, passe):
         if Mastodon.create_app(
             'minitel',
             api_base_url='https://'+instance,
-            to_file = instance+'.secret'
+            to_file=instance+'.secret'
         ):
             print('minitel app created on instance '+instance)
         else:
@@ -80,10 +82,10 @@ def mastodon_login(login, passe):
     return(mastodon)
 
 
-def strformat(left='',center='',right='',fill=' ',width=40):
+def strformat(left='', center='', right='', fill=' ', width=40):
     " formattage de texte "
     total = width-len(left+center+right)
-    if total > 0 :
+    if total > 0:
         out = left + fill * total + right
     else:
         out = left+center+right
@@ -120,12 +122,12 @@ def ulla_sommaire(minitel, login, mastodon):
             home = mastodon.timeline_home(limit=9999)
             minitel.pos(21)
 
-            if len(home)>0:
+            if len(home) > 0:
                 if '_pagination_next' in home[-1]:
                     minitel._print("plus de ")
                 minitel._print(str(len(home)))
                 minitel.forecolor(minitel.vert)
-                if len(home)>1:
+                if len(home) > 1:
                     minitel._print(" messages reçus")
                 else:
                     minitel._print(" message reçu")
@@ -170,7 +172,6 @@ def mastodon_all_follow(mastodon, me, following=True):
 def ulla_dialogue_liste(minitel, login, mastodon):
     "Dialogue"
     touche = minitel.repetition
-    zone = 1
     page = 1
     lignes = 16
 
@@ -179,13 +180,12 @@ def ulla_dialogue_liste(minitel, login, mastodon):
     followers = mastodon_all_follow(mastodon, me, following=False)
     # on cherche les followers qu'on suit
     for f1 in follow:
-        f = None
         f1['following'] = True
         for f2 in followers:
             if f1['acct'] == f2['acct']:
                 followers.remove(f2)
                 f1['follower'] = True
-                print(f1['acct'],len(followers))
+                print(f1['acct'], len(followers))
                 break
     # on ajoute les followers à la liste globale
     for f2 in followers:
@@ -204,59 +204,61 @@ def ulla_dialogue_liste(minitel, login, mastodon):
             minitel.cursor(False)
             minitel.canblock(4, 19, 1)
 
-        if page<0:
+        if page < 0:
             page = abs(page)
+            pages = round((len(follow)+lignes-1)/lignes)
             minitel.pos(3, 21)
-            minitel._print(strformat(left="%s/%s" % (page, round((len(follow)+lignes-1)/lignes)),width=10))
-            for ligne in range(1,lignes+1):
+            minitel._print(strformat(left="%s/%s" % (page, pages), width=10))
+            for ligne in range(1, lignes+1):
                 minitel.pos(3+ligne)
                 minitel.forecolor(minitel.cyan)
                 debut = (page-1)*lignes
-                minitel._print(strformat(right=str(debut+ligne),width=3))
+                minitel._print(strformat(right=str(debut+ligne), width=3))
                 minitel.forecolor(minitel.bleu)
-                minitel._print("←" if 'follower' in follow[debut+ligne-1] else '̶')
-                minitel._print("→" if 'following' in follow[debut+ligne-1] else '̶')
+                minitel._print("←" if 'follower' in follow[debut+ligne-1] else '̶')  # noqa
+                minitel._print("→" if 'following' in follow[debut+ligne-1] else '̶')  # noqa
                 print_acct(minitel, follow[debut+ligne-1]['acct'])
                 if debut+ligne == len(follow):
                     break
 
         # gestion de la zone de saisie courante
         choix = ''
-        (choix,touche) = minitel.input(23, 2, 3)
+        (choix, touche) = minitel.input(23, 2, 3)
 
         if choix == 'R' and touche == minitel.envoi:
             minitel.message(0, 1, 2, "Liste régionale indisponible", bip=True)
         elif choix == 'G' and touche == minitel.envoi:
             minitel.message(0, 1, 2, "Guide bientôt disponible", bip=True)
-        elif choix == 'P' and touche == minitel.envoi: # changer de pseudo
-            return('RAZ','')
-        elif choix !='' and int(choix) >= 1 and int(choix)<=len(follow):
+        elif choix == 'P' and touche == minitel.envoi:  # changer de pseudo
+            return('RAZ', '')
+        elif choix !='' and int(choix) >= 1 and int(choix) <= len(follow):
             if touche == minitel.suite:
-                ulla_message_affiche(minitel, login, mastodon, follow[int(choix)-1]['acct'])
+                ulla_message_affiche(minitel, login, mastodon,
+                                     follow[int(choix)-1]['acct'])
                 touche = minitel.repetition
             if touche == minitel.envoi:
-                return('MSG',follow[int(choix)-1]['acct'])
+                return('MSG', follow[int(choix)-1]['acct'])
             if touche == minitel.guide:
                 # return('INF',follow[int(choix)-1]['acct'])
-                ulla_portrait(minitel, login, mastodon, follow[int(choix)-1]['acct'])
+                ulla_portrait(minitel, login, mastodon,
+                              follow[int(choix)-1]['acct'])
                 touche = minitel.repetition
         elif touche == minitel.suite:
             page = -(page+1)
         elif touche == minitel.retour:
-            if page>1:
+            if page > 1:
                 page = -(page-1)
             else:
                 minitel.bip()
         elif touche != minitel.repetition:
             break
 
-    return('','')
+    return('', '')
 
 
 def ulla_portrait(minitel, login, mastodon, qui):
     "Affiche un portrait"
     touche = minitel.repetition
-    zone = 1
 
     while True:
         # affichage initial ou répétition
@@ -274,22 +276,27 @@ def ulla_portrait(minitel, login, mastodon, qui):
         portrait = mastodon.account_search(qui)[0]
         print(portrait)
         minitel.pos(5)
-        minitel._print("%s → %s #msg=%s → %s" % (portrait['followers_count'], portrait['display_name'],portrait['statuses_count'],portrait['following_count']) + '\x0d\x0a')
-        minitel._print(re.sub('<.*?>','',re.sub('<(p|br)>','\x0d\x0a',portrait['note'])))
-        minitel.pos(20,31)
+        minitel._print("%s → %s #msg=%s → %s" % (portrait['followers_count'],
+                                                 portrait['display_name'],
+                                                 portrait['statuses_count'],
+                                                 portrait['following_count']) +
+                       '\x0d\x0a')
+        minitel._print(re.sub('<.*?>', '', re.sub('<(p|br)>', '\x0d\x0a',
+                                                  portrait['note'])))
+        minitel.pos(20, 31)
         minitel._print(str(portrait['created_at'])[:10])
 
-        (choix, touche) = minitel.input(24,1,0)
+        (choix, touche) = minitel.input(24, 1, 0)
 
         if touche == minitel.envoi:
             ulla_message_envoi(minitel, login, mastodon, qui)
-            return('','')
+            return('', '')
         if touche == minitel.retour:
-            return('','')
+            return('', '')
         if touche != minitel.repetition:
             break
 
-    return('','') # retour sommaire général
+    return('', '')  # retour sommaire général
 
 
 def ulla_message_envoi(minitel, login, mastodon, qui):
@@ -319,7 +326,8 @@ def ulla_message_envoi(minitel, login, mastodon, qui):
         msg = minitel.zones[0]['texte'].strip()
 
         if touche == minitel.envoi:
-            toot = mastodon.status_post("@"+qui + " " + msg, visibility='direct')
+            toot = mastodon.status_post("@"+qui + " " + msg,
+                                        visibility='direct')
             if toot is not None:
                 minitel.message(0, 1, 2, "Message envoyé")
                 return('')
@@ -327,7 +335,7 @@ def ulla_message_envoi(minitel, login, mastodon, qui):
         if touche != minitel.repetition:
             break
 
-    return('') # retour sommaire général
+    return('')  # retour sommaire général
 
 
 def ulla_message_affiche(minitel, login, mastodon, qui):
@@ -335,7 +343,7 @@ def ulla_message_affiche(minitel, login, mastodon, qui):
     touche = minitel.repetition
 
     if qui != '':
-        statuses = mastodon.account_statuses(mastodon.account_search(qui)[0]['id'])
+        statuses = mastodon.account_statuses(mastodon.account_search(qui)[0]['id'])  # noqa
     else:
         statuses = mastodon.timeline_home(limit=9999)
 
@@ -357,76 +365,86 @@ def ulla_message_affiche(minitel, login, mastodon, qui):
                 minitel._print(qui)
 
             minitel.pos(4)
-            minitel._print(re.sub('<.*?>','',re.sub('<(p|br)>',' ',status['content'])).strip()[:240])
+            minitel._print(re.sub('<.*?>', '',
+                                  re.sub('<(p|br)>', ' ',
+                                         status['content'])).strip()[:240])
 
-            if 'in_reply_to_id' in status and status['in_reply_to_id'] is not None:
-                reply_to = mastodon.status(status['in_reply_to_id'])
-                minitel.pos(18)
-                minitel._print(re.sub('<.*?>','',re.sub('<(p|br)>',' ',reply_to['content'])).strip()[:240])
+            if ('in_reply_to_id' in status and
+                status['in_reply_to_id'] is not None):
+                    reply_to = mastodon.status(status['in_reply_to_id'])
+                    minitel.pos(18)
+                    minitel._print(re.sub('<.*?>', '',
+                                          re.sub('<(p|br)>', ' ',
+                                                 reply_to['content'])).strip()[:240])
             else:
                 reply_to = None
 
-        (msg, touche) = minitel.input(11, 1, 240, data='', caractere = '.', redraw=True)
+        (msg, touche) = minitel.input(11, 1, 240, data='',
+                                      caractere='.', redraw=True)
 
         if msg != '' and touche == minitel.envoi:
-            toot = mastodon.status_post("@"+qui + " " + msg, in_reply_to_id=status['id'],visibility='direct')
+            toot = mastodon.status_post("@"+qui + " " + msg,
+                                        in_reply_to_id=status['id'],
+                                        visibility='direct')
             print(toot)
             if toot is not None:
                 minitel.message(0, 1, 2, "Message envoyé")
-            return('','')
+            return('', '')
 
         elif touche == minitel.suite:
             if courant < len(statuses)-1:
                 courant = courant+1
                 touche = minitel.repetition
             else:
-                minitel.message(0,1,2,"Fin des messages", bip=True)
+                minitel.message(0, 1, 2, "Fin des messages", bip=True)
         elif touche == minitel.retour:
             if courant > 0:
                 courant = courant-1
                 touche = minitel.repetition
             else:
-                minitel.message(0,1,2,"Début des messages", bip=True)
+                minitel.message(0, 1, 2, "Début des messages", bip=True)
         elif touche != minitel.repetition:
             break
 
-    return('','') # retour sommaire général
+    return('', '')  # retour sommaire général
 
 
 def ulla():
     minitel = init()
-    minitel._print(minitel.PRO2+'\x69\x45') # passage clavier en minuscules
+    minitel._print(minitel.PRO2+'\x69\x45')  # passage clavier en minuscules
 
-    login = sys.argv[1] if (len(sys.argv)>1) else ''
-    passe = sys.argv[2] if (len(sys.argv)>2) else ''
+    login = sys.argv[1] if (len(sys.argv) > 1) else ''
+    passe = sys.argv[2] if (len(sys.argv) > 2) else ''
 
-    (login,passe) = connexion(minitel, login, passe)
+    (login, passe) = connexion(minitel, login, passe)
     mastodon = mastodon_login(login, passe)
 
     # affiche la version de l'instance mastodon distante
-    minitel.caneol(0,1)
+    minitel.caneol(0, 1)
     minitel._print("Mastodon v"+mastodon.retrieve_mastodon_version())
 
     rubrique = ''
     qui = ''
     while True:
         if rubrique == 'DIA':
-            (rubrique,qui) = ulla_dialogue_liste(minitel, login, mastodon)
+            (rubrique, qui) = ulla_dialogue_liste(minitel, login, mastodon)
 
         if rubrique == 'ANN':
-            (rubrique,qui) = ulla_message_affiche(minitel, login, mastodon,'')
+            (rubrique, qui) = ulla_message_affiche(minitel, login,
+                                                   mastodon, '')
 
-        elif rubrique == 'RAZ': # changer de pseudo > reconnexion mastodon
-            (login,passe) = connexion(minitel, '', '')
+        elif rubrique == 'RAZ':  # changer de pseudo > reconnexion mastodon
+            (login, passe) = connexion(minitel, '', '')
             rubrique = ''
 
-        elif rubrique == 'MSG': # changer de pseudo > reconnexion mastodon
+        elif rubrique == 'MSG':  # changer de pseudo > reconnexion mastodon
             rubrique = ulla_message_envoi(minitel, login, mastodon, qui)
 
         else:
             if rubrique != '':
-                minitel.message(0, 1, 2, "Désolé, pas encore implémenté", bip=True)
-                print(rubrique,"pas implémenté")
+                minitel.message(0, 1, 2, "Désolé, pas encore implémenté",
+                                bip=True)
+                print(rubrique, "pas implémenté")
 
             choix = ulla_sommaire(minitel, login, mastodon)
             if choix == '1':
