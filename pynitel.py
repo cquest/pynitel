@@ -240,9 +240,11 @@ class Pynitel:
         self.pos(ligne, colonne)
 
     # lower - clavier en mode minuscule / majuscule (mode "Enseignement")
-    def lower(self):
-        print('lower: non implémenté')
-        return
+    def lower(self, islower=True):
+        if islower or islower == 1:
+            self.send(self.PRO2+'\x69\x45')  # passage clavier en minuscules
+        else:
+            self.send(self.PRO2+'\x6a\x45')  # retour clavier majuscule
 
     def message(self, ligne, colonne, delai, message, bip=False):
         """Affiche un message à une position donnée pendant un temps donné,
