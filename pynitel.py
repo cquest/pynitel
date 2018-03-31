@@ -490,7 +490,3 @@ class PynitelWS:
 
     def flush(self):
         return
-
-    @asyncio.coroutine
-    def pynitel_loop(self):
-        pass
