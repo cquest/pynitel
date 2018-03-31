@@ -467,8 +467,7 @@ class PynitelWS:
         self.buffer = ''
 
     async def write(self, data):
-        print("send:", data)
-        self.ws.send(data)
+        await self.ws.send(data.decode())
 
     async def read(self, maxlen=1):
         if len(self.buffer) < maxlen:
@@ -479,7 +478,6 @@ class PynitelWS:
             self.buffer = self.buffer[maxlen:]
         else:
             data = ''
-        print("read:", data)
         return data.encode()
 
     def in_waiting(self):
