@@ -466,11 +466,9 @@ class PynitelWS:
         self.ws = websocket
         self.buffer = ''
 
-    @asyncio.coroutine
-    def write(self, data):
+    async def write(self, data):
         print("send:", data)
-        yield from self.ws.send(data)
-        pass
+        self.ws.send(data)
 
     async def read(self, maxlen=1):
         if len(self.buffer) < maxlen:
