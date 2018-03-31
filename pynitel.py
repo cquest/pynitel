@@ -47,7 +47,7 @@ class Pynitel:
         self.PRO2 = '\x1b\x3a'
         self.PRO3 = '\x1b\x3b'
 
-    def wait(self):
+    async def wait(self):
         "Attente d'une connexion"
 
         print('ATTENTE')
@@ -58,11 +58,11 @@ class Pynitel:
 
         print('CONNECTION')
 
-    def end(self):
+    async def end(self):
         "Fin de connexion, raccrochage"
         self.conn.write(b'\x1b9g')
 
-    def _if(self):
+    async def _if(self):
         "Dernier caractère reçu"
         data = self.conn.read(1)
         if not data:
@@ -75,193 +75,195 @@ class Pynitel:
         self.conn.settimeout(0)  # timeout de 2 minutes pour les saisies...
         self.conn.recv(10000)
 
-    def home(self):
+    async def home(self):
         "Efface écran et ligne 0"
-        self._del(0, 1)
-        self.sendchr(12)  # FF
-        self.cursor(False)  # Coff
+        await self._del(0, 1)
+        await self.sendchr(12)  # FF
+        await self.cursor(False)  # Coff
 
-    def vtab(self, ligne):
+    async def vtab(self, ligne):
         "Positionne le curseur sur un début de ligne"
-        self.pos(ligne, 1)
+        await self.pos(ligne, 1)
 
-    def pos(self, ligne, colonne=1):
+    async def pos(self, ligne, colonne=1):
         "Positionne le curseur sur une ligne / colonne"
         if ligne == 1 and colonne == 1:
-            self.sendchr(30)
+            await self.sendchr(30)
         else:
-            self.sendchr(31)
-            self.sendchr(64+ligne)
-            self.sendchr(64+colonne)
+            await self.sendchr(31)
+            await self.sendchr(64+ligne)
+            await self.sendchr(64+colonne)
 
-    def _del(self, ligne, colonne):
+    async def _del(self, ligne, colonne):
         "Effacement jusque fin de ligne"
-        self.pos(ligne, colonne)
-        self.sendchr(24)
+        await self.pos(ligne, colonne)
+        await self.sendchr(24)
 
-    def normal(self):
+    async def normal(self):
         "Passage en vidéo normale"
-        self.sendesc('I')
+        await self.sendesc('I')
 
-    def backcolor(self, couleur):
+    async def backcolor(self, couleur):
         """Change la couleur de fond,
         à valider par un espace pour le texte (identique à HCOLOR)"""
-        self.sendesc(chr(80+couleur))
+        await self.sendesc(chr(80+couleur))
 
-    def canblock(self, debut, fin, colonne, inverse=False):
+    async def canblock(self, debut, fin, colonne, inverse=False):
         """Efface un rectangle sur l'écran,
         compris entre deux lignes et après une colonne"""
         if inverse is False:
-            self.pos(debut, colonne)
-            self.sendchr(24)
+            await self.pos(debut, colonne)
+            await self.sendchr(24)
             for ligne in range(debut, fin):
-                self.sendchr(10)
-                self.sendchr(24)
+                await self.sendchr(10)
+                await self.sendchr(24)
         else:
-            self.pos(fin, colonne)
-            self.sendchr(24)
+            await self.pos(fin, colonne)
+            await self.sendchr(24)
             for ligne in range(debut, fin):
-                self.sendchr(11)
-                self.sendchr(24)
+                await self.sendchr(11)
+                await self.sendchr(24)
 
-    def caneol(self, ligne, colonne):
+    async def caneol(self, ligne, colonne):
         "Efface la fin de ligne derrière la colonne spécifiée"
-        self.pos(ligne, colonne)
-        self.sendchr(24)  # CAN
+        await self.pos(ligne, colonne)
+        await self.sendchr(24)  # CAN
 
-    def cls(self):
+    async def cls(self):
         "Efface l'écran du Minitel"
-        self.home()
+        await self.home()
 
-    def color(self, couleur):
+    async def color(self, couleur):
         "Change la couleur du texte ou graphique"
-        self.sendesc(chr(64+couleur))
+        await self.sendesc(chr(64+couleur))
 
     # curpos - donne la position actuelle du curseur du Minitel
-    def cursor(self, visible):
+    async def cursor(self, visible):
         "Permet de rendre apparent ou invisible le curseur clignotant"
         if visible == 1 or visible is True:
-            self.sendchr(17)  # Con
+            await self.sendchr(17)  # Con
         else:
-            self.sendchr(20)  # Coff
+            await self.sendchr(20)  # Coff
 
     # dial - appel un numéro de téléphone
-    def draw(self, num=0):
+    async def draw(self, num=0):
         "Envoi un écran préchargé dans un buffer vers le minitel"
         if num is None:
             num = self.ecrans['last']
         self.ecrans['last'] = num
         if num is not None:
-            self.conn.write(self.ecrans[num])
+            await self.conn.write(self.ecrans[num])
 
-    def drawscreen(self, fichier):
+    async def drawscreen(self, fichier):
         "Envoi du contenu d'un fichier"
         with open(fichier, 'rb') as f:
-            self.conn.write(f.read())
+            await self.conn.write(f.read())
 
-    def flash(self, clignote=True):
+    async def flash(self, clignote=True):
         "Passage en clignotant"
         if clignote is None or clignote is True or clignote == 1:
-            self.sendesc('\x48')
+            await self.sendesc('\x48')
         else:
-            self.sendesc('\x49')
+            await self.sendesc('\x49')
 
-    def forecolor(self, couleur):
+    async def forecolor(self, couleur):
         "Change la couleur des caractères"
-        self.color(couleur)
+        await self.color(couleur)
 
-    def get(self):
+    async def get(self):
         "Rend le contenu du buffer de saisie actuel"
-        return(self.conn.read(self.conn.in_waiting))
+        return(await self.conn.read(self.conn.in_waiting))
 
     # getid - lecture ROM/RAM Minitel
-    def getid(self):
+    async def getid(self):
         print("getid: non implémenté...")
         return
 
-    def hcolor(self, couleur):
+    async def hcolor(self, couleur):
         "Change la couleur de fond, à valider par un espace pour le texte"
-        self.sendesc(chr(80+couleur))
+        await self.sendesc(chr(80+couleur))
 
-    def input(self, ligne, colonne, longueur, data='',
-              caractere='.', redraw=True):
+    async def input(self, ligne, colonne, longueur, data='',
+                    caractere='.', redraw=True):
         "Gestion de zone de saisie"
         # affichage initial
         if redraw:
-            self.sendchr(20)  # Coff
-            self.pos(ligne, colonne)
-            self._print(data)
-            self.plot(caractere, longueur-len(data))
-        self.pos(ligne, colonne+len(data))
-        self.sendchr(17)  # Con
+            await self.sendchr(20)  # Coff
+            await self.pos(ligne, colonne)
+            await self._print(data)
+            await self.plot(caractere, longueur-len(data))
+        await self.pos(ligne, colonne+len(data))
+        await self.sendchr(17)  # Con
 
         while True:
-            c = self.conn.read(1)
+            c = await self.conn.read(1)
             if c == '':
                 continue
-            elif c == '\x13':  # SEP donc touche Minitel...
-                c = self.conn.read(1)
+            elif c == b'\x13':  # SEP donc touche Minitel...
+                c = await self.conn.read(1)
 
-                if c == '\x45' and data != '':  # annulation
+                if c == b'\x45' and data != '':  # annulation
                     data = ''
-                    self.sendchr(20)  # Coff
-                    self.pos(ligne, colonne)
-                    self._print(data)
-                    self.plot(caractere, longueur-len(data))
-                    self.pos(ligne, colonne)
-                    self.sendchr(17)  # Con
-                elif c == '\x47' and data != '':  # correction
-                    self.send(chr(8)+caractere+chr(8))
+                    await self.sendchr(20)  # Coff
+                    await self.pos(ligne, colonne)
+                    await self._print(data)
+                    await self.plot(caractere, longueur-len(data))
+                    await self.pos(ligne, colonne)
+                    await self.sendchr(17)  # Con
+                elif c == b'\x47' and data != '':  # correction
+                    await self.send(chr(8)+caractere+chr(8))
                     data = data[:len(data)-1]
                 else:
                     self.lastkey = ord(c)-64
                     self.laststar = (data != '' and data[:-1] == '*')
                     return(data, ord(c)-64)
-            elif c == '\x1b':  # filtrage des acquittements protocole...
-                c = c + self.conn.read(1)
+            elif c == b'\x1b':  # filtrage des acquittements protocole...
+                c = c + await self.conn.read(1)
                 if c == self.PRO1:
-                    self.conn.read(1)
+                    await self.conn.read(1)
                 elif c == self.PRO2:
-                    self.conn.read(2)
+                    await self.conn.read(2)
                 elif c == self.PRO3:
-                    self.conn.read(3)
-            elif c >= ' ' and len(data) >= longueur:
-                self.bip()
-            elif c >= ' ':
-                data = data + c
+                    await self.conn.read(3)
+            elif c >= b' ' and len(data) >= longueur:
+                await self.bip()
+            elif c >= b' ':
+                data = data + c.decode()
+                await self.send(c.decode())  # écho
+                print(data)
 
-    def inverse(self, inverse=1):
+    async def inverse(self, inverse=1):
         "Passage en inverse"
         if inverse is None or inverse == 1 or inverse is True:
-            self.sendesc('\x5D')
+            await self.sendesc('\x5D')
         else:
-            self.sendesc('\x5C')
+            await self.sendesc('\x5C')
 
-    def locate(self, ligne, colonne):
+    async def locate(self, ligne, colonne):
         "Positionne le curseur"
-        self.pos(ligne, colonne)
+        await self.pos(ligne, colonne)
 
     # lower - clavier en mode minuscule / majuscule (mode "Enseignement")
-    def lower(self, islower=True):
+    async def lower(self, islower=True):
         if islower or islower == 1:
-            self.send(self.PRO2+'\x69\x45')  # passage clavier en minuscules
+            await self.send(self.PRO2+'\x69\x45')  # passage clavier en minuscules
         else:
-            self.send(self.PRO2+'\x6a\x45')  # retour clavier majuscule
+            await self.send(self.PRO2+'\x6a\x45')  # retour clavier majuscule
 
-    def message(self, ligne, colonne, delai, message, bip=False):
+    async def message(self, ligne, colonne, delai, message, bip=False):
         """Affiche un message à une position donnée pendant un temps donné,
         puis l'efface"""
         if bip:
-            self.bip()
-        self.pos(ligne, colonne)
-        self._print(message)
-        self.conn.flush()
+            await self.bip()
+        await self.pos(ligne, colonne)
+        await self._print(message)
+        await self.conn.flush()
         time.sleep(delai)
-        self.pos(ligne, colonne)
-        self.plot(' ', len(message))
+        await self.pos(ligne, colonne)
+        await self.plot(' ', len(message))
 
-    def printscreen(self, fichier):
-        self.drawscreen(fichier)
+    async def printscreen(self, fichier):
+        await self.drawscreen(fichier)
 
     def resetzones(self):
         while len(self.zones) > 0:
@@ -280,14 +282,14 @@ class Pynitel:
 
     # sysparm - Paramètres du modem
 
-    def underline(self, souligne=True):
+    async def underline(self, souligne=True):
         "Passe en mode souligné ou normal"
         if souligne is None or souligne is True or souligne == 1:
-            self.sendesc(chr(90))
+            await self.sendesc(chr(90))
         else:
-            self.sendesc(chr(89))
+            await self.sendesc(chr(89))
 
-    def waitzones(self, zone):
+    async def waitzones(self, zone):
         "Gestion de zones de saisie"
         if len(self.zones) == 0:
             return (0, 0)
@@ -297,17 +299,17 @@ class Pynitel:
         while True:
             # affichage initial
             if zone <= 0:
-                self.cursor(False)
+                await self.cursor(False)
                 for z in self.zones:
-                    self.pos(z['ligne'], z['colonne'])
+                    await self.pos(z['ligne'], z['colonne'])
                     if z['couleur'] != self.blanc:
-                        self.forecolor(z['couleur'])
-                    self._print(z['texte'])
+                        await self.forecolor(z['couleur'])
+                    await self._print(z['texte'])
                 if zone < 0:
                     zone = -zone
 
             # gestion de la zone de saisie courante
-            (self.zones[zone-1]['texte'], touche) = self.input(self.zones[zone-1]['ligne'],  # noqa
+            (self.zones[zone-1]['texte'], touche) = await self.input(self.zones[zone-1]['ligne'],  # noqa
                 self.zones[zone-1]['colonne'], self.zones[zone-1]['longueur'],
                 data=self.zones[zone-1]['texte'], caractere='.', redraw=False)
 
@@ -324,7 +326,7 @@ class Pynitel:
                     zone = len(self.zones)
             else:
                 self.zonenumber = zone
-                self.cursor(False)
+                await self.cursor(False)
                 return(zone, touche)
 
     # waitconnect - attente de CONNECTION
@@ -339,50 +341,50 @@ class Pynitel:
         "Dernière touche de fonction utilisée sur le Minitel lors d'une saisie"
         return self.lastkey
 
-    def scale(self, taille):
+    async def scale(self, taille):
         "Change la taille du texte"
-        self.sendesc(chr(76+taille))
+        await self.sendesc(chr(76+taille))
 
-    def notrace(self):
+    async def notrace(self):
         "Passe en texte souligné, à valider par un espace"
-        self.sendesc(chr(89))
+        await self.sendesc(chr(89))
 
-    def trace(self):
+    async def trace(self):
         "Fin de texte souligné, à valider par un espace"
-        self.sendesc(chr(90))
+        await self.sendesc(chr(90))
 
-    def plot(self, car, nombre):
+    async def plot(self, car, nombre):
         "Affichage répété d'un caractère"
         if nombre > 1:
-            self._print(car)
+            await self._print(car)
         if nombre == 2:
-            self._print(car)
+            await self._print(car)
         elif nombre > 2:
             while nombre > 63:
-                self.sendchr(18)
-                self.sendchr(64+63)
+                await self.sendchr(18)
+                await self.sendchr(64+63)
                 nombre = nombre-63
-            self.sendchr(18)
-            self.sendchr(64+nombre-1)
+            await self.sendchr(18)
+            await self.sendchr(64+nombre-1)
 
-    def text(self):
+    async def text(self):
         "Mode texte"
-        self.sendchr(15)
+        await self.sendchr(15)
 
-    def gr(self):
+    async def gr(self):
         "Mode graphique"
-        self.sendchr(14)
+        await self.sendchr(14)
 
-    def step(self, scroll):
+    async def step(self, scroll):
         "Active ou désactive le mode scrolling"
-        self.sendesc(':')
-        self.sendchr(ord('j')-scroll)
-        self.send('C')
+        await self.sendesc(':')
+        await self.sendchr(ord('j')-scroll)
+        await self.send('C')
 
-    def xdraw(self, fichier):
+    async def xdraw(self, fichier):
         "Envoi du contenu d'un fichier"
         with open(fichier, 'rb') as f:
-            self.conn.write(f.read())
+            await self.conn.write(f.read())
 
     def load(self, num, fichier):
         "Charge un fichier vidéotex dans un buffer"
@@ -394,25 +396,25 @@ class Pynitel:
         "Lecture de la date et heure"
         print('read: non implémenté')
 
-    def _print(self, texte):
-        self.send(self.accents(texte))
+    async def _print(self, texte):
+        await self.send(self.accents(texte))
 
-    def send(self, text):
+    async def send(self, text):
         "Envoi de données vers le minitel"
         if self.conn is not None:
-            self.conn.write(text.encode())
+            await self.conn.write(text.encode())
         else:
             print('conn = None')
 
-    def sendchr(self, ascii):
-        self.send(chr(ascii))
+    async def sendchr(self, ascii):
+        await self.send(chr(ascii))
 
-    def sendesc(self, text):
-        self.sendchr(27)
-        self.send(text)
+    async def sendesc(self, text):
+        await self.sendchr(27)
+        await self.send(text)
 
-    def bip(self):
-        self.sendchr(7)
+    async def bip(self):
+        await self.sendchr(7)
 
     def accents(self, text):
         "Conversion des caractères accentués (cf STUM p 103)"
@@ -464,9 +466,11 @@ class PynitelWS:
         self.ws = websocket
         self.buffer = ''
 
-    async def write(self, data):
+    @asyncio.coroutine
+    def write(self, data):
         print("send:", data)
-        await self.ws.send(data)
+        yield from self.ws.send(data)
+        pass
 
     async def read(self, maxlen=1):
         if len(self.buffer) < maxlen:
@@ -488,3 +492,7 @@ class PynitelWS:
 
     def flush(self):
         return
+
+    @asyncio.coroutine
+    def pynitel_loop(self):
+        pass

@@ -10,7 +10,7 @@ import json
 m = None
 
 
-def annuaire_saisie(quoi, ou):
+async def annuaire_saisie(quoi, ou):
     "Masque de saisie des critères de recherche"
     # définition des zones
     global m
@@ -27,11 +27,11 @@ def annuaire_saisie(quoi, ou):
     while True:
         # affichage initial ou répétition
         if touche == m.repetition:
-            m.home()
-            m.xdraw('ecrans/E.ANNUAIRE.OPTIM.vtx')
+            await m.home()
+            await m.xdraw('ecrans/E.ANNUAIRE.OPTIM.vtx')
 
         # gestion de la zone de saisie courante
-        (zone, touche) = m.waitzones(zone)
+        (zone, touche) = await m.waitzones(zone)
 
         if touche != m.repetition:
             break
@@ -167,7 +167,7 @@ def strformat(left='', right='', fill=' ', width=40):
     return(out)
 
 
-def affiche_resultat(quoi, ou, res, annu=''):
+async def affiche_resultat(quoi, ou, res, annu=''):
     "Affiche les résultats de la recherche"
     global m
     page = 1
@@ -300,8 +300,7 @@ def affiche_resultat(quoi, ou, res, annu=''):
     return(touche)
 
 
-@asyncio.coroutine
-def annuaire(websocket, path):
+async def annuaire(websocket, path):
     global m
     # Initialisation du serveur vidéotex
     m = pynitel.Pynitel(pynitel.PynitelWS(websocket))
@@ -313,8 +312,7 @@ def annuaire(websocket, path):
 
     while True:
         print(annuaire_quoi, annuaire_ou)
-        (touche, annuaire_quoi, annuaire_ou) = annuaire_saisie(annuaire_quoi,
-                                                               annuaire_ou)
+        (touche, annuaire_quoi, annuaire_ou) = await annuaire_saisie(annuaire_quoi, annuaire_ou)
         if touche == m.envoi:
             # on lance la recherche
             m.cursor(False)
@@ -326,7 +324,7 @@ def annuaire(websocket, path):
             if len(resultat) == 0:
                 m.message(0, 1, 3, "Aucune adresse trouvée")
             else:
-                if affiche_resultat(annuaire_quoi, annuaire_ou,
+                if await affiche_resultat(annuaire_quoi, annuaire_ou,
                                     resultat, annu) != m.correction:
                     (annuaire_quoi, annuaire_ou) = ('', '')
 
