@@ -4,6 +4,8 @@
 # (C) 1984-2017 Christian Quest / A-GPL
 
 import time
+import asyncio
+import websockets
 
 
 class Pynitel:
@@ -62,7 +64,7 @@ class Pynitel:
 
     def _if(self):
         "Dernier caractère reçu"
-        data = self.conn.read()
+        data = self.conn.read(1)
         if not data:
             return None
         else:
@@ -170,7 +172,7 @@ class Pynitel:
 
     def get(self):
         "Rend le contenu du buffer de saisie actuel"
-        return(self.conn.read(self.conn.in_waiting).decode())
+        return(self.conn.read(self.conn.in_waiting))
 
     # getid - lecture ROM/RAM Minitel
     def getid(self):
@@ -194,11 +196,11 @@ class Pynitel:
         self.sendchr(17)  # Con
 
         while True:
-            c = self.conn.read(1).decode()
+            c = self.conn.read(1)
             if c == '':
                 continue
             elif c == '\x13':  # SEP donc touche Minitel...
-                c = self.conn.read(1).decode()
+                c = self.conn.read(1)
 
                 if c == '\x45' and data != '':  # annulation
                     data = ''
@@ -216,7 +218,7 @@ class Pynitel:
                     self.laststar = (data != '' and data[:-1] == '*')
                     return(data, ord(c)-64)
             elif c == '\x1b':  # filtrage des acquittements protocole...
-                c = c + self.conn.read(1).decode()
+                c = c + self.conn.read(1)
                 if c == self.PRO1:
                     self.conn.read(1)
                 elif c == self.PRO2:
@@ -455,3 +457,34 @@ class Pynitel:
         text = text.replace('Ç', 'C')
 
         return(text)
+
+
+class PynitelWS:
+    def __init__(self, websocket):
+        self.ws = websocket
+        self.buffer = ''
+
+    async def write(self, data):
+        print("send:", data)
+        await self.ws.send(data)
+
+    async def read(self, maxlen=1):
+        if len(self.buffer) < maxlen:
+            data = await self.ws.recv()
+            self.buffer = self.buffer + data
+        if len(self.buffer) >= maxlen:
+            data = self.buffer[:maxlen]
+            self.buffer = self.buffer[maxlen:]
+        else:
+            data = ''
+        print("read:", data)
+        return data.encode()
+
+    def in_waiting(self):
+        return
+
+    def settimeout(self, timeout):
+        return
+
+    def flush(self):
+        return
