@@ -197,8 +197,12 @@ class Pynitel:
 
         while True:
             c = await self.conn.read(1)
+            print(c)
             if c == '':
                 continue
+            elif c == b'\x0d':  # CR -> ENVOI
+                self.lastkey = self.envoi
+                return(data, self.envoi)
             elif c == b'\x13':  # SEP donc touche Minitel...
                 c = await self.conn.read(1)
 
@@ -230,7 +234,6 @@ class Pynitel:
             elif c >= b' ':
                 data = data + c.decode()
                 await self.send(c.decode())  # écho
-                print(data)
 
     async def inverse(self, inverse=1):
         "Passage en inverse"
@@ -486,5 +489,5 @@ class PynitelWS:
     def settimeout(self, timeout):
         return
 
-    def flush(self):
+    async def flush(self):
         return
