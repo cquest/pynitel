@@ -197,7 +197,6 @@ class Pynitel:
 
         while True:
             c = await self.conn.read(1)
-            print(c)
             if c == '':
                 continue
             elif c == b'\x0d':  # CR -> ENVOI
@@ -249,7 +248,7 @@ class Pynitel:
     # lower - clavier en mode minuscule / majuscule (mode "Enseignement")
     async def lower(self, islower=True):
         if islower or islower == 1:
-            await self.send(self.PRO2+'\x69\x45')  # passage clavier en minuscules
+            await self.send(self.PRO2+'\x69\x45')  # passage clavier en minus.
         else:
             await self.send(self.PRO2+'\x6a\x45')  # retour clavier majuscule
 
