@@ -163,7 +163,6 @@ def strformat(left='', right='', fill=' ', width=40):
         out = left + fill * total + right
     else:
         out = left+right
-    print("'"+out+"'", width, total, len(out))
     return(out)
 
 
@@ -312,8 +311,8 @@ async def annuaire(websocket, path):
         (annuaire_quoi, annuaire_ou) = ('', '')
 
     while True:
-        print(annuaire_quoi, annuaire_ou)
         (touche, annuaire_quoi, annuaire_ou) = await annuaire_saisie(annuaire_quoi, annuaire_ou)  # noqa
+        print(annuaire_quoi, annuaire_ou)
         if touche == m.envoi:
             # on lance la recherche
             await m.cursor(False)
@@ -321,7 +320,6 @@ async def annuaire(websocket, path):
             await m.flash()
             await m._print('Recherche... ')
             (resultat, annu) = annuaire_recherche(annuaire_quoi, annuaire_ou)
-            print(resultat)
             if len(resultat) == 0:
                 await m.message(0, 1, 3, "Aucune adresse trouvée")
             else:
