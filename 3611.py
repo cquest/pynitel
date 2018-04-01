@@ -32,15 +32,19 @@ async def annuaire_saisie(quoi, ou):
 
         # gestion de la zone de saisie courante
         (zone, touche) = await m.waitzones(zone)
+        # on récupère les quoi et le ou...
+        quoi = ("%s %s %s" % (m.zones[0]['texte'], m.zones[1]['texte'],
+                              m.zones[5]['texte'])).strip()
+        ou = ("%s %s %s" % (m.zones[4]['texte'], m.zones[3]['texte'],
+                            m.zones[2]['texte'])).strip()
 
-        if touche != m.repetition:
-            break
-
-    quoi = ("%s %s %s" % (m.zones[0]['texte'], m.zones[1]['texte'],
-                          m.zones[5]['texte'])).strip()
-    ou = ("%s %s %s" % (m.zones[4]['texte'], m.zones[3]['texte'],
-                        m.zones[2]['texte'])).strip()
-    return (touche, quoi, ou)
+        if (touche == m.envoi):
+            if quoi+ou == '':
+                await m.message(0, 1, 3, "Entrez au moins un nom !")
+            else:
+                return (touche, quoi, ou)
+        elif touche != m.repetition:
+            await m.message(0, 1, 3, "Désolé, pas encore disponible")
 
 
 def annuaire_recherche(quoi, ou):
@@ -311,11 +315,7 @@ async def annuaire(websocket, path):
         (annuaire_quoi, annuaire_ou) = ('', '')
 
     while True:
-        while annuaire_quoi + annuaire_ou == '':
-            (touche, annuaire_quoi, annuaire_ou) = await annuaire_saisie(annuaire_quoi, annuaire_ou)  # noqa
-            if annuaire_quoi + annuaire_ou == '':
-                await m.message(0, 1, 3, "Entrez au moins un nom !")
-        print(annuaire_quoi, annuaire_ou)
+        (touche, annuaire_quoi, annuaire_ou) = await annuaire_saisie(annuaire_quoi, annuaire_ou)  # noqa
         if touche == m.envoi:
             # on lance la recherche
             await m.cursor(False)
