@@ -311,9 +311,9 @@ async def annuaire(websocket, path):
         (annuaire_quoi, annuaire_ou) = ('', '')
 
     while True:
-        while annuaire_quoi == '' and annuaire_ou == '':
+        while annuaire_quoi + annuaire_ou == '':
             (touche, annuaire_quoi, annuaire_ou) = await annuaire_saisie(annuaire_quoi, annuaire_ou)  # noqa
-            if annuaire_quoi == '' and annuaire_ou == '':
+            if annuaire_quoi + annuaire_ou == '':
                 await m.message(0, 1, 3, "Entrez au moins un nom !")
         print(annuaire_quoi, annuaire_ou)
         if touche == m.envoi:
