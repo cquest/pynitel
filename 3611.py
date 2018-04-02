@@ -25,19 +25,20 @@ async def annuaire_saisie(m, quoi, ou):
         # affichage initial ou répétition
         if touche == m.repetition:
             await m.home()
-            await m.xdraw('ecrans/E.ANNUAIRE.vtx')
+            await m.xdraw('ecrans/E.ANNUAIRE.OPTIM.vtx')
 
         # gestion de la zone de saisie courante
         (zone, touche) = await m.waitzones(zone)
         # on récupère les quoi et le ou...
         quoi = ("%s %s %s" % (m.zones[0]['texte'], m.zones[1]['texte'],
-                              m.zones[5]['texte'])).strip()
+                              m.zones[5]['texte'])).strip().replace('  ', ' ')
         ou = ("%s %s %s" % (m.zones[4]['texte'], m.zones[3]['texte'],
-                            m.zones[2]['texte'])).strip()
+                            m.zones[2]['texte'])).strip().replace('  ', ' ')
 
         if (touche == m.envoi):
-            if quoi+ou == '':
-                await m.message(0, 1, 3, "Entrez au moins un nom !")
+            if quoi == '':
+                await m.message(0, 1, 3,
+                                "Entrez au moins un nom ou une rubrique !")
             else:
                 return (touche, quoi, ou)
         elif touche != m.repetition:
@@ -56,7 +57,7 @@ def annuaire_recherche(quoi, ou):
     if len(res) == 0:
         annu = "118000.fr"
         res = annu118000(quoi, ou)
-    print(quoi, ou, res)
+    print(quoi, ou, annu, res)
     return(res, annu)
 
 
@@ -175,7 +176,9 @@ async def affiche_resultat(m, quoi, ou, res, annu=''):
         if page > 0:  # affichage
             # entête sur 2 lignes + séparation
             await m.home()
-            await m._print(quoi.upper()+' à '+ou)
+            await m._print(quoi.upper())
+            if ou.strip() != '':
+                await m._print(' à '+ou.upper())
             await m.pos(2)
             await m.color(m.bleu)
             await m.plot('̶', 40)
