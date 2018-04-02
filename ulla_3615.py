@@ -71,7 +71,7 @@ def mastodon_login(login, passe):
             to_file=login+".secret"
         )
     except:
-        print("ERROR: First Login Failed!", login, passe)
+        print("ERROR: First Login Failed!", login)
         sys.exit(1)
 
     return(mastodon)
