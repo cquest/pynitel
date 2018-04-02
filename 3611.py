@@ -7,13 +7,10 @@ import pynitel
 import sys
 import json
 
-m = None
 
-
-async def annuaire_saisie(quoi, ou):
+async def annuaire_saisie(m, quoi, ou):
     "Masque de saisie des critères de recherche"
     # définition des zones
-    global m
     m.resetzones()
     m.zone(5, 13, 27, quoi, m.blanc)
     m.zone(7, 13, 27, '', m.blanc)
@@ -170,9 +167,8 @@ def strformat(left='', right='', fill=' ', width=40):
     return(out)
 
 
-async def affiche_resultat(quoi, ou, res, annu=''):
+async def affiche_resultat(m, quoi, ou, res, annu=''):
     "Affiche les résultats de la recherche"
-    global m
     page = 1
     while True:
         if page > 0:  # affichage
@@ -305,30 +301,30 @@ async def affiche_resultat(quoi, ou, res, annu=''):
 
 
 async def annuaire(websocket, path):
-    global m
     # Initialisation du serveur vidéotex
     m = pynitel.Pynitel(pynitel.PynitelWS(websocket))
 
     if len(sys.argv) > 2:
-        (annuaire_quoi, annuaire_ou) = (sys.argv[1], sys.argv[2])
+        (annu_quoi, annu_ou) = (sys.argv[1], sys.argv[2])
     else:
-        (annuaire_quoi, annuaire_ou) = ('', '')
+        (annu_quoi, annu_ou) = ('', '')
 
     while True:
-        (touche, annuaire_quoi, annuaire_ou) = await annuaire_saisie(annuaire_quoi, annuaire_ou)  # noqa
+        (touche, annu_quoi, annu_ou) = await annuaire_saisie(m, annu_quoi,
+                                                             annu_ou)
         if touche == m.envoi:
             # on lance la recherche
             await m.cursor(False)
             await m.pos(0, 1)
             await m.flash()
             await m._print('Recherche... ')
-            (resultat, annu) = annuaire_recherche(annuaire_quoi, annuaire_ou)
+            (resultat, annu) = annuaire_recherche(annu_quoi, annu_ou)
             if len(resultat) == 0:
                 await m.message(0, 1, 3, "Aucune adresse trouvée")
             else:
-                if await affiche_resultat(annuaire_quoi, annuaire_ou,
+                if await affiche_resultat(m, annu_quoi, annu_ou,
                                           resultat, annu) != m.correction:
-                    (annuaire_quoi, annuaire_ou) = ('', '')
+                    (annu_quoi, annu_ou) = ('', '')
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
