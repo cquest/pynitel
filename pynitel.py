@@ -472,11 +472,8 @@ class PynitelWS:
 
     async def read(self, maxlen=1):
         if len(self.buffer) < maxlen:
-            try:
-                data = await self.ws.recv()
-                self.buffer = self.buffer + data
-            except websockets.exceptions.ConnectionClosed:
-                print('Deconnexion')
+            data = await self.ws.recv()
+            self.buffer = self.buffer + data
         if len(self.buffer) >= maxlen:
             data = self.buffer[:maxlen]
             self.buffer = self.buffer[maxlen:]
