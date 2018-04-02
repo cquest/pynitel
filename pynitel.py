@@ -4,7 +4,6 @@
 # (C) 1984-2017 Christian Quest / A-GPL
 
 import time
-import asyncio
 import websockets
 
 
@@ -473,7 +472,10 @@ class PynitelWS:
 
     async def read(self, maxlen=1):
         if len(self.buffer) < maxlen:
-            data = await self.ws.recv()
+            try:
+                data = await self.ws.recv()
+            except websockets.exceptions.ConnectionClosed:
+                print('Deconnexion')
             self.buffer = self.buffer + data
         if len(self.buffer) >= maxlen:
             data = self.buffer[:maxlen]
