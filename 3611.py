@@ -56,6 +56,7 @@ def annuaire_recherche(quoi, ou):
     if len(res) == 0:
         annu = "118000.fr"
         res = annu118000(quoi, ou)
+    print(quoi, ou, res)
     return(res, annu)
 
 
