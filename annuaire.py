@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
 import asyncio
 import websockets
-import pynitel
 from bs4 import BeautifulSoup
 import requests
+import pynitel
 import sys
 import json
 
-m = None
 
-
-async def annuaire_saisie(quoi, ou):
+async def annuaire_saisie(m, quoi, ou):
     "Masque de saisie des critères de recherche"
     # définition des zones
-    global m
     m.resetzones()
     m.zone(5, 13, 27, quoi, m.blanc)
     m.zone(7, 13, 27, '', m.blanc)
@@ -32,15 +29,22 @@ async def annuaire_saisie(quoi, ou):
 
         # gestion de la zone de saisie courante
         (zone, touche) = await m.waitzones(zone)
+        # on récupère les quoi et le ou...
+        quoi = ("%s %s %s" % (m.zones[0]['texte'], m.zones[1]['texte'],
+                              m.zones[5]['texte'])).strip().replace('  ', ' ')
+        ou = ("%s %s %s" % (m.zones[4]['texte'], m.zones[3]['texte'],
+                            m.zones[2]['texte'])).strip().replace('  ', ' ')
 
-        if touche != m.repetition:
-            break
-
-    quoi = ("%s %s %s" % (m.zones[0]['texte'], m.zones[1]['texte'],
-                          m.zones[5]['texte'])).strip()
-    ou = ("%s %s %s" % (m.zones[4]['texte'], m.zones[3]['texte'],
-                        m.zones[2]['texte'])).strip()
-    return (touche, quoi, ou)
+        if (touche == m.sommaire):
+            return(touche, '', '')
+        if (touche == m.envoi):
+            if quoi == '':
+                await m.message(0, 1, 3,
+                                "Entrez au moins un nom ou une rubrique !")
+            else:
+                return (touche, quoi, ou)
+        elif touche != m.repetition:
+            await m.message(0, 1, 3, "Désolé, pas encore disponible")
 
 
 def annuaire_recherche(quoi, ou):
@@ -55,6 +59,7 @@ def annuaire_recherche(quoi, ou):
     if len(res) == 0:
         annu = "118000.fr"
         res = annu118000(quoi, ou)
+    print(quoi, ou, annu, res)
     return(res, annu)
 
 
@@ -163,32 +168,33 @@ def strformat(left='', right='', fill=' ', width=40):
         out = left + fill * total + right
     else:
         out = left+right
-    print("'"+out+"'", width, total, len(out))
     return(out)
 
 
-async def affiche_resultat(quoi, ou, res, annu=''):
+async def affiche_resultat(m, quoi, ou, res, annu=''):
     "Affiche les résultats de la recherche"
-    global m
     page = 1
     while True:
         if page > 0:  # affichage
             # entête sur 2 lignes + séparation
-            m.home()
-            m._print(quoi.upper()+' à '+ou)
-            m.pos(2)
-            m.color(m.bleu)
-            m.plot('̶', 40)
+            await m.home()
+            await m._print(quoi.upper())
+            if ou.strip() != '':
+                await m._print(' à '+ou.upper())
+            await m.pos(2)
+            await m.color(m.bleu)
+            await m.plot('̶', 40)
             if annu != '':
-                m.pos(23, 1)
-                m.color(m.bleu)
-                m._print("(C)\x0d\x0a"+annu)
+                await m.pos(23, 1)
+                await m.color(m.bleu)
+                await m._print("(C)\x0d\x0a"+annu)
 
             # plusieurs pages ?
             if len(res) > 5:
-                m.pos(1, 37)
-                m._print(" "+str(int(abs(page)))+'/'+str(int((len(res)+4)/5)))
-                m.pos(3)
+                await m.pos(1, 37)
+                await m._print(" " + str(int(abs(page))) +
+                               '/' + str(int((len(res)+4)/5)))
+                await m.pos(3)
 
             # if len(res)>5:
             #     if abs(page)>1:
@@ -203,7 +209,7 @@ async def affiche_resultat(quoi, ou, res, annu=''):
             #         m.plot('̶', 8)
 
             # première ligne de résultat
-            m.pos(3)
+            await m.pos(3)
             for a in range((page-1)*5, page*5):
                 if a < len(res):
                     r = res[a]
@@ -211,22 +217,22 @@ async def affiche_resultat(quoi, ou, res, annu=''):
                         r['adresse'] = '(adresse masquée)'
                     if 'tel' not in r or r['tel'] == '':
                         r['tel'] = ' (num. masqué)'
-                    m.color(m.blanc)
-                    m._print(strformat(right=str(int(a+1)), width=3))
-                    m._print(' '+strformat(left=r['nom'][:20],
-                                           right=r['tel'], width=36))
-                    m.color(m.vert)
-                    m._print('    '+r['adresse'][:35]+'\x0d\x0a    ' +
-                             r['cp']+' '+r['ville']+'\x0d\x0a')
-                    m.color(m.bleu)
+                    await m.color(m.blanc)
+                    await m._print(strformat(right=str(int(a+1)), width=3))
+                    await m._print(' '+strformat(left=r['nom'][:20],
+                                                 right=r['tel'], width=36))
+                    await m.color(m.vert)
+                    await m._print('    '+r['adresse'][:35]+'\x0d\x0a    ' +
+                                   r['cp']+' '+r['ville']+'\x0d\x0a')
+                    await m.color(m.bleu)
                     if a < page*5:
-                        m.plot(' ', 4)
-                        m.plot('̶', 36)
+                        await m.plot(' ', 4)
+                        await m.plot('̶', 36)
 
             # ligne finale
-            m.pos(22)
-            m.color(m.bleu)
-            m.plot('̶', 40)
+            await m.pos(22)
+            await m.color(m.bleu)
+            await m.plot('̶', 40)
 
             # if len(res)>5:
             #     if len(res)>page*5:
@@ -245,90 +251,109 @@ async def affiche_resultat(quoi, ou, res, annu=''):
 
             if page > 1:
                 if len(res) > page*5:  # place pour le SUITE
-                    m.pos(22, 15)
+                    await m.pos(22, 15)
                 else:
-                    m.pos(23, 15)
-                m.color(m.vert)
-                m._print('page précédente →')
-                m.underline()
-                m._print(' ')
-                m.inverse()
-                m.color(m.cyan)
-                m._print('_RETOUR ')
+                    await m.pos(23, 15)
+                await m.color(m.vert)
+                await m._print('page précédente →')
+                await m.underline()
+                await m._print(' ')
+                await m.inverse()
+                await m.color(m.cyan)
+                await m._print('_RETOUR ')
             if len(res) > page*5:
-                m.pos(23, 17)
-                m.color(m.vert)
-                m._print('page suivante →')
-                m.underline()
-                m._print(' ')
-                m.inverse()
-                m.color(m.cyan)
-                m._print('_SUITE  ')
+                await m.pos(23, 17)
+                await m.color(m.vert)
+                await m._print('page suivante →')
+                await m.underline()
+                await m._print(' ')
+                await m.inverse()
+                await m.color(m.cyan)
+                await m._print('_SUITE  ')
 
-            m.pos(24, 15)
-            m.color(m.vert)
-            m._print("autre recherche → ")
-            m.inverse()
-            m.color(m.cyan)
-            m._print("SOMMAIRE")
+            await m.pos(24, 15)
+            await m.color(m.vert)
+            await m._print("autre recherche → ")
+            await m.inverse()
+            await m.color(m.cyan)
+            await m._print("SOMMAIRE")
         else:
             page = abs(page)
 
         # attente saisie
-        (choix, touche) = m.input(0, 1, 0, '')
-        m.cursor(False)
+        (choix, touche) = await m.input(0, 1, 0, '')
+        await m.cursor(False)
         if touche == m.suite:
             if page*5 < len(res):
                 page = page + 1
             else:
-                m.bip()
+                await m.bip()
                 page = -page  # pas de ré-affichage
         elif touche == m.retour:
             if page > 1:
                 page = page - 1
             else:
-                m.bip()
+                await m.bip()
                 page = -page  # pas de ré-affichage
         elif touche == m.sommaire:
             break
         elif touche == m.correction:  # retour saisie pour correction
             return(touche)
         elif touche != m.repetition:
-            m.bip()
+            await m.bip()
             page = -page  # pas de ré-affichage
 
     return(touche)
 
 
+async def annuaire_teletel(m):
+    touche = 0
+    while touche not in [m.sommaire, m.connexionfin]:
+        (touche, annu_quoi, annu_ou) = await annuaire_saisie(m, '', '')
+        if touche == m.envoi:
+            # on lance la recherche
+            await m.cursor(False)
+            await m.pos(0, 1)
+            await m.flash()
+            await m._print('Recherche... ')
+            (resultat, annu) = annuaire_recherche(annu_quoi, annu_ou)
+            if len(resultat) == 0:
+                await m.message(0, 1, 3, "Aucune adresse trouvée")
+            else:
+                if await affiche_resultat(m, annu_quoi, annu_ou,
+                                          resultat, annu) != m.correction:
+                    (annu_quoi, annu_ou) = ('', '')
+
+
 async def annuaire(websocket, path):
-    global m
     # Initialisation du serveur vidéotex
     m = pynitel.Pynitel(pynitel.PynitelWS(websocket))
 
     if len(sys.argv) > 2:
-        (annuaire_quoi, annuaire_ou) = (sys.argv[1], sys.argv[2])
+        (annu_quoi, annu_ou) = (sys.argv[1], sys.argv[2])
     else:
-        (annuaire_quoi, annuaire_ou) = ('', '')
+        (annu_quoi, annu_ou) = ('', '')
 
     while True:
-        print(annuaire_quoi, annuaire_ou)
-        (touche, annuaire_quoi, annuaire_ou) = await annuaire_saisie(annuaire_quoi, annuaire_ou)
+        (touche, annu_quoi, annu_ou) = await annuaire_saisie(m, annu_quoi,
+                                                             annu_ou)
         if touche == m.envoi:
             # on lance la recherche
-            m.cursor(False)
-            m.pos(0, 1)
-            m.flash()
-            m._print('Recherche... ')
-            (resultat, annu) = annuaire_recherche(annuaire_quoi, annuaire_ou)
-            print(resultat)
+            await m.cursor(False)
+            await m.pos(0, 1)
+            await m.flash()
+            await m._print('Recherche... ')
+            (resultat, annu) = annuaire_recherche(annu_quoi, annu_ou)
             if len(resultat) == 0:
-                m.message(0, 1, 3, "Aucune adresse trouvée")
+                await m.message(0, 1, 3, "Aucune adresse trouvée")
             else:
-                if await affiche_resultat(annuaire_quoi, annuaire_ou,
-                                    resultat, annu) != m.correction:
-                    (annuaire_quoi, annuaire_ou) = ('', '')
+                if await affiche_resultat(m, annu_quoi, annu_ou,
+                                          resultat, annu) != m.correction:
+                    (annu_quoi, annu_ou) = ('', '')
+
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
         websockets.serve(annuaire, 'localhost', 3611))
-    asyncio.get_event_loop().run_forever()
+    loop.run_forever()
