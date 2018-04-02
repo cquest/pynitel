@@ -22,29 +22,34 @@ async def connexion(m, login='', passe=''):
         if touche == m.repetition:
             await m.home()
             await m.drawscreen('ecrans/ulla/E.ULLA')
+            await m.caneol(0,1)
+            await m.flash(True)
+            await m._print('Entrez votre login mastodon user@instance')
 
         # gestion de la zone de saisie courante
         (zone, touche) = await m.waitzones(zone)
 
+        if touche == m.envoi:
+            login = m.zones[0]['texte'].strip()
+            if login:
+                if login[0] == '@':
+                    login = login[1:]
+                if passe == '':
+                    await m.caneol(0, 1)
+                    await m._print("Passe:")
+                    (passe, touche) = await m.input(0, 7, 30, data='')
+                    await m.caneol(0, 1)
+                if passe != '':
+                    return (login, passe, touche)
+
         if touche != m.repetition:
             break
-
-    if touche == m.envoi:
-        login = m.zones[0]['texte'].strip()
-        if login:
-            if login[0] == '@':
-                login = login[1:]
-
-            if passe == '':
-                await m.pos(0, 1)
-                await m._print("Passe:")
-                (passe, touche) = await m.input(0, 7, 30, data='')
-
-    return (login, passe, touche)
 
 
 def mastodon_login(login, passe):
     "Connexion à l'instance mastodon, retourne un objet api mastodon"
+    if not login:
+        return
     instance = login.split('@')[1]
 
     # Create application if it does not exist
@@ -89,7 +94,6 @@ def strformat(left='', center='', right='', fill=' ', width=40):
 
 async def print_acct(m, acct):
     "affiche un login mastodon en couleur"
-    print(acct)
     await m.forecolor(m.blanc)
     if '@' in acct:
         await m._print(acct.split('@')[0])
@@ -116,6 +120,7 @@ async def ulla_sommaire(m, login, mastodon):
             await m.drawscreen('ecrans/ulla/E.ULLA.SOM')
 
             home = mastodon.timeline_home(limit=9999)
+            print(home)
             await m.pos(21)
 
             if len(home) > 0:
@@ -148,10 +153,11 @@ async def ulla_sommaire(m, login, mastodon):
             elif choix == '6':
                 await m.message(0, 1, 2, "emails bientôt disponibles !",
                                 bip=True)
+            else:
+                return(choix)
         elif touche != m.repetition:
             break
 
-    return (choix)
 
 
 def mastodon_all_follow(mastodon, me, following=True):
@@ -173,6 +179,8 @@ async def ulla_dialogue_liste(m, login, mastodon):
     page = 1
     lignes = 16
 
+    await m.caneol(0, 1)
+    await m._print('Un instant...')
     me = mastodon.account_search(login)
     follow = mastodon_all_follow(mastodon, me)
     followers = mastodon_all_follow(mastodon, me, following=False)
@@ -215,7 +223,7 @@ async def ulla_dialogue_liste(m, login, mastodon):
                 await m.forecolor(m.bleu)
                 await m._print("←" if 'follower' in follow[debut+ligne-1] else '̶')  # noqa
                 await m._print("→" if 'following' in follow[debut+ligne-1] else '̶')  # noqa
-                print_acct(m, follow[debut+ligne-1]['acct'])
+                await print_acct(m, follow[debut+ligne-1]['acct'])
                 if debut+ligne == len(follow):
                     break
 
@@ -409,18 +417,22 @@ async def ulla_message_affiche(m, login, mastodon, qui):
 
 async def ulla_teletel(m):
     await m._print(m.PRO2+'\x69\x45')  # passage clavier en minuscules
-    (login, passe, touche) = await connexion(m)
+    if len(sys.argv) > 2:
+        (login, passe) = (sys.argv[1], sys.argv[2])
+    else:
+        (login, passe) = ('', '')
+    (login, passe, touche) = await connexion(m, login, passe)
     if touche == m.envoi:
         mastodon = mastodon_login(login, passe)
 
         # affiche la version de l'instance mastodon distante
-        await m.caneol(0, 1)
-        await m._print("Mastodon v"+mastodon.retrieve_mastodon_version())
-
+        await m.message(0, 1, 1,
+                        "Mastodon v" + mastodon.retrieve_mastodon_version())
         rubrique = ''
         qui = ''
 
     while touche not in [m.sommaire, m.connexionfin]:
+        print(rubrique)
         if rubrique == 'DIA':
             (rubrique, qui) = await ulla_dialogue_liste(m,
                                                         login, mastodon)
