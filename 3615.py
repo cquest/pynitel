@@ -20,7 +20,7 @@ async def teletel_saisie(m, codes):
         # gestion de la zone de saisie courante
         (zone, touche) = await m.waitzones(zone)
         # on récupère les quoi et le ou...
-        code = m.zones[0]['texte']
+        code = m.zones[0]['texte'].upper().strip()
 
         if (touche == m.envoi):
             if code == '':
@@ -50,9 +50,8 @@ async def teletel(websocket, path):
         if code != '':
             # on lance la recherche
             await m.pos(0, 1)
-            await m.flash()
             await m._print('connexion...           t0 0,00F/min')
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
             await m.home()
             if code in ['11', '3611', 'AE', 'ANNU', 'ANNUAIRE']:
                 await annuaire_teletel(m)
