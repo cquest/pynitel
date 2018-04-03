@@ -51,7 +51,7 @@ async def teletel(websocket, path):
             # on lance la recherche
             await m.pos(0, 1)
             await m.flash()
-            await m._print('Connexion... ')
+            await m._print('connexion...           t0 0,00F/min')
             await asyncio.sleep(1)
             await m.home()
             if code in ['11', '3611', 'AE', 'ANNU', 'ANNUAIRE']:
@@ -69,5 +69,5 @@ async def teletel(websocket, path):
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
-        websockets.serve(teletel, 'localhost', 3611))
+        websockets.serve(teletel, 'localhost', 3615))
     loop.run_forever()
