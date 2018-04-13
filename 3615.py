@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+import os
 import asyncio
 import websockets
 import pynitel
 from annuaire import annuaire_teletel
 from ulla_3615 import ulla_teletel
+from arbo import arbo_teletel
 
 async def teletel_saisie(m, codes):
     m.resetzones()
@@ -26,8 +28,8 @@ async def teletel_saisie(m, codes):
             if code == '':
                 await m.message(0, 1, 3,
                                 "Entrez le code du service souhaité")
-            elif code in codes:
-                return (touche, code)
+            elif code.upper() in codes or code.lower() in codes:
+                return (touche, code.upper())
             else:
                 await m.message(0, 1, 3,
                                 "Code de service inconnu")
@@ -41,9 +43,14 @@ async def teletel(websocket, path):
     # //ws -> vide  /ulla/ws -> ULLA etc...
     code = path.replace('/ws', '').replace('/', '').upper().strip()
     touche = m.envoi
-    # liste des service connus...
-    codes = ['11', '3611', 'AE', 'ANNU', 'ANNUAIRE',
-             'ULLA']
+
+    # liste des services disponibles
+    annu = {'code': ['11', '3611', 'AE', 'ANNU', 'ANNUAIRE'],
+            'info': 'Annuaire Electronique'}
+    ulla = {'code': ['ULLA'], 'info': 'Messagerie ULLA (mastodon)'}
+    arbo = {'code': os.listdir('services')}
+    print(arbo)
+    codes = annu['code'] + ulla['code'] + arbo['code']
 
     while True:
         await m._print(m.PRO2+'\x6A\x45')  # passage clavier standard
@@ -53,10 +60,12 @@ async def teletel(websocket, path):
             await m._print('connexion...           t0 0,00F/min')
             await asyncio.sleep(2)
             await m.home()
-            if code in ['11', '3611', 'AE', 'ANNU', 'ANNUAIRE']:
+            if code in annu['code']:
                 await annuaire_teletel(m)
-            elif code == 'ULLA':
+            elif code in ulla['code']:
                 await ulla_teletel(m)
+            elif code.lower() in arbo['code']:
+                await arbo_teletel(m, code.lower())
 
         (touche, code) = await teletel_saisie(m, codes)
         if touche == m.envoi:
