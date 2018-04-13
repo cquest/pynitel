@@ -468,6 +468,8 @@ class PynitelWS:
         self.buffer = ''
 
     async def write(self, data):
+        if data.find(b'\xff') > 0:
+            data = data[:data.find(b'\xff')-1]
         await self.ws.send(data.decode())
 
     async def read(self, maxlen=1):
