@@ -227,6 +227,21 @@ class Pynitel:
                     await self.conn.read(2)
                 elif c == self.PRO3:
                     await self.conn.read(3)
+            elif c == b'\x16' or c == b'\x19':  # accent...
+                print('accent')
+                accent = await self.conn.read(1)
+                if accent in b'ABCHK':
+                    accent = accent + await self.conn.read(1)
+                accents = {'Aa': 'à', 'Ca': 'â',
+                           'Ae': 'è', 'Be': 'é', 'Ce': 'ê', 'He': 'ë',
+                           'Ci': 'î', 'Hi': 'ï',
+                           'Co': 'ô',
+                           'Cu': 'û', 'Hu': 'ü',
+                           'Kc': 'ç',
+                           '\x6a': 'Œ', '\x7a': 'œ',
+                           '\x30': '°', '\x23': '£',  '\x7b': 'ß'}
+                if accent in accents:
+                    data = data + accents[accent.decode()]
             elif c >= b' ' and len(data) >= longueur:
                 await self.bip()
             elif c >= b' ':
