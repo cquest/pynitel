@@ -12,6 +12,7 @@ async def teletel_saisie(m, codes):
     m.zone(17, 12, 28, '', m.blanc)
     touche = m.repetition
     zone = 1
+    codes = sorted(codes, key=str.upper)
 
     while True:
         # affichage initial ou répétition
@@ -33,6 +34,30 @@ async def teletel_saisie(m, codes):
             else:
                 await m.message(0, 1, 3,
                                 "Code de service inconnu")
+        elif touche == m.guide:
+            await m.cls()
+            await m.locate(2, 1)
+            await m.scale(1)
+            await m._print('Services disponibles:')
+            await m.locate(3, 1)
+            await m.forecolor(m.bleu)
+            await m.plot('̶', 40)
+            await m.locate(4, 1)
+            for n in range(1, len(codes)):
+                await m._print(str(n) + ' - ' + codes[n-1].upper()+'\x0d\x0a')
+            await m.locate(23, 1)
+            await m.forecolor(m.bleu)
+            await m.plot('̶', 40)
+            await m.locate(24, 16)
+            await m._print('Tapez un N° .. puis ')
+            await m.inverse()
+            await m._print('ENVOI')
+            (numero, touche) = await m.input(24, 28, 2, caractere='.')
+            try:
+                code = codes[int(numero)-1]
+                return (touche, code.upper())
+            except:
+                touche = m.repetition
         elif touche != m.repetition:
             await m.message(0, 1, 3, "Désolé, pas encore disponible")
 
