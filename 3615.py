@@ -83,7 +83,7 @@ async def teletel(websocket, path):
             # on lance la recherche
             await m.pos(0, 1)
             await m._print('connexion...           t0 0,00F/min')
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
             await m.home()
             if code in annu['code']:
                 await annuaire_teletel(m)
