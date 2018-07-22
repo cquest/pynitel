@@ -171,7 +171,7 @@ class Pynitel:
 
     async def get(self):
         "Rend le contenu du buffer de saisie actuel"
-        return(await self.conn.read(self.conn.in_waiting))
+        return(await self.conn.read(self.conn.in_waiting()))
 
     # getid - lecture ROM/RAM Minitel
     async def getid(self):
