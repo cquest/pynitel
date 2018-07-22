@@ -44,7 +44,8 @@ async def teletel_saisie(m, codes):
             await m.plot('̶', 40)
             await m.locate(4, 1)
             for n in range(1, len(codes)):
-                await m._print(str(n) + ' - ' + codes[n-1].upper()+'\x0d\x0a')
+                await m._print(str(n).rjust(2) + ' - '
+                               + codes[n-1].upper()+'\x0d\x0a')
             await m.locate(23, 1)
             await m.forecolor(m.bleu)
             await m.plot('̶', 40)
