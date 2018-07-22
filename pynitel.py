@@ -285,7 +285,8 @@ class Pynitel:
         while len(self.zones) > 0:
             self.zones.pop()
 
-    # scroll - Active ou désactive le mode "rouleau"
+    async def scroll(self, start=1):
+        await self.step(self, start)
 
     def starflag(self):
         """Indique si la dernière saisie s'est terminée par une étoile
