@@ -83,20 +83,28 @@ def add_if_not_none(the_dict, key, item):
         the_dict[key] = item.string.strip()
 
 
+def cleanstr(txt):
+    txt = txt.replace('ç','C')
+    txt = txt.upper().strip()
+    txt = txt.replace('-',' ')
+    txt = txt.replace('SAINT','ST')
+    return(txt)
+
+
 def annufake(qui, ou):
     # recherche sur faux annuaire stocké en CSV
     res = []
 
-    qui = qui.upper().strip().replace('-',' ')
-    ou = ou.upper().strip()
+    qui = cleanstr(qui)
+    ou = cleanstr(ou)
 
     with open('fug.csv') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if ((qui in row['nom'].upper() or qui in row['prof'].upper())
-                and ou in row['ville'].replace('ç','C').upper()):
+            if ((qui in cleanstr(row['nom']) or qui in cleanstr(row['prof']))
+                and ou in cleanstr(row['ville'])):
                     res.append(dict(nom=row['nom'], adresse=row['prof'],
-                                    cp=row['adresse'], ville=row['ville'], tel=row['tel'])) 
+                                    cp=row['adresse'], ville=row['ville'], tel=row['tel']))
 
     return(res)
 
