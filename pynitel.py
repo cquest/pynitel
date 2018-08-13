@@ -393,6 +393,19 @@ class Pynitel:
         print('read: non implémenté')
 
     def _print(self, texte):
+        last = None
+        nb = 0
+        for c in texte:
+            if c == last:
+                nb = nb+1
+            elif nb > 2:
+                texte = texte.replace(last * nb, last + chr(18) + chr(63+nb))
+                print(last,nb)
+                nb = 0
+                last = None
+            else:
+                last = c
+                nb = 1
         self.send(self.accents(texte))
 
     def send(self, text):
