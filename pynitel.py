@@ -28,6 +28,10 @@ class Pynitel:
         self.cyan = 6
         self.blanc = 7
 
+        # constantes de niveaux de gris
+        self.gris = [self.noir, self.bleu, self.rouge, self.magenta,
+                     self.vert, self.jaune, self.cyan, self.blanc]
+
         # constantes des touches de fonction du Minitel
         # en mode Vidéotex ou Mixte
         self.envoi = 1
@@ -400,7 +404,6 @@ class Pynitel:
                 nb = nb+1
             elif nb > 2:
                 texte = texte.replace(last * nb, last + chr(18) + chr(63+nb))
-                print(last,nb)
                 nb = 0
                 last = None
             else:
