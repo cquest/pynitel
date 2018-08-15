@@ -1,0 +1,12 @@
+[Unit]
+Description=ECG sur Minitel
+After=basic.target
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/home/pi/pynitel/scripts/start-ecg.sh
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
