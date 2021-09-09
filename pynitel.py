@@ -228,6 +228,18 @@ class Pynitel:
             elif c >= ' ':
                 data = data + c
 
+    def getKey(self):
+        """Attends la pression d'une touches de fonction Télétel"""
+
+        while True:
+            char = self.conn.read(1).decode()
+
+            if char == "\x13":          # caractères SEP
+                self.lastkey = ord(self.conn.read(1).decode())-64
+                return self.lastkey
+
+
+
     def inverse(self, inverse=1):
         "Passage en inverse"
         if inverse is None or inverse == 1 or inverse is True:
