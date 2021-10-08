@@ -43,5 +43,5 @@ This example simulates the famous "3615 ULLA" a chat and messaging pink Minitel 
 
 **Status**: partly implemented
 
-**To test**: `python3 ulla.py [mastodon_account password]`
-**Example**: `python3 ulla.py cquest@amicale.net mypassword`
+**To test**: `python3 ulla.py [mastodon_login password mastodon_username]`
+**Example**: `python3 ulla.py email@example.com mypassword cquest@amicale.net`
