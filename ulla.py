@@ -48,9 +48,9 @@ def connexion(minitel, login='', passe=''):
     return (login, passe)
 
 
-def mastodon_login(login, passe):
+def mastodon_login(login, passe, username):
     "Connexion à l'instance mastodon, retourne un objet api mastodon"
-    instance = login.split('@')[1]
+    instance = username.split('@')[1]
 
     # Create application if it does not exist
     if not os.path.isfile(instance+'.secret'):
@@ -169,13 +169,13 @@ def mastodon_all_follow(mastodon, me, following=True):
     return(follow)
 
 
-def ulla_dialogue_liste(minitel, login, mastodon):
+def ulla_dialogue_liste(minitel, login, username, mastodon):
     "Dialogue"
     touche = minitel.repetition
     page = 1
     lignes = 16
 
-    me = mastodon.account_search(login)
+    me = mastodon.account_search(username)
     follow = mastodon_all_follow(mastodon, me)
     followers = mastodon_all_follow(mastodon, me, following=False)
     # on cherche les followers qu'on suit
@@ -415,9 +415,10 @@ def ulla():
 
     login = sys.argv[1] if (len(sys.argv) > 1) else ''
     passe = sys.argv[2] if (len(sys.argv) > 2) else ''
+    username = sys.argv[3] if (len(sys.argv) > 3) else ''
 
     (login, passe) = connexion(minitel, login, passe)
-    mastodon = mastodon_login(login, passe)
+    mastodon = mastodon_login(login, passe, username)
 
     # affiche la version de l'instance mastodon distante
     minitel.caneol(0, 1)
@@ -427,7 +428,7 @@ def ulla():
     qui = ''
     while True:
         if rubrique == 'DIA':
-            (rubrique, qui) = ulla_dialogue_liste(minitel, login, mastodon)
+            (rubrique, qui) = ulla_dialogue_liste(minitel, login, username, mastodon)
 
         if rubrique == 'ANN':
             (rubrique, qui) = ulla_message_affiche(minitel, login,
