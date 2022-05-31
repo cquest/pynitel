@@ -245,8 +245,8 @@ class Pynitel:
             elif c >= ' ':
                 data = data + c
 
-    def getKey(self):
-        """Attends la pression d'une touches de fonction Télétel"""
+    def get_key(self):
+        """Attends puis renvoi la pression d'une touche de fonction Télétel"""
 
         while True:
             char = self.conn.read(1).decode()
