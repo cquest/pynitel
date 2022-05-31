@@ -135,7 +135,24 @@ class Pynitel:
         "Change la couleur du texte ou graphique"
         self.sendesc(chr(64+couleur))
 
-    # curpos - donne la position actuelle du curseur du Minitel
+    def curpos(self):
+        """Renvoi la position x, y du curseur
+
+        :rtype: tuple[int, int]
+        :return:  position x,y du curseur
+        """
+        # Demande position curseur
+        self.sendesc('\x61')
+
+        char = self.conn.read(1).decode()
+        while char != '\x1F':
+            char = char = self.conn.read(1).decode()
+
+        x = ord(self.conn.read(1).decode()) - 64
+        y = ord(self.conn.read(1).decode()) - 64
+
+        return (x, y)
+
     def cursor(self, visible):
         "Permet de rendre apparent ou invisible le curseur clignotant"
         if visible == 1 or visible is True:
@@ -227,6 +244,17 @@ class Pynitel:
                 self.bip()
             elif c >= ' ':
                 data = data + c
+
+    def get_key(self):
+        """Attends puis renvoi la pression d'une touche de fonction Télétel"""
+
+        while True:
+            char = self.conn.read(1).decode()
+
+            if char == "\x13":          # caractères SEP
+                self.lastkey = ord(self.conn.read(1).decode())-64
+                return self.lastkey
+
 
     def inverse(self, inverse=1):
         "Passage en inverse"
